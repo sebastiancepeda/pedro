@@ -4,7 +4,7 @@ import cv2
 import pandas as pd
 from loguru import logger
 
-from data_source import (
+from io_utils.data_source import (
     get_image_label_gen, load_label_data)
 from cv.image_processing import (
     get_contours_rgb,
@@ -36,7 +36,7 @@ def draw_rectangle(im, r):
     return im
 
 
-def segment_plates(params):
+def segment_plates(params, logger):
     model_file = params['model_file']
     labels = params['labels']
     metadata = params['metadata']
@@ -52,10 +52,10 @@ def segment_plates(params):
     debug_level = 0
     #
     out_folder = f"{folder}/output_plate_segmentation"
-    print("Loading model")
+    logger.info("Loading model")
     model, preprocess_input = get_model_definition()
     model.load_weights(model_file)
-    print("Loading data")
+    logger.info("Loading data")
     labels = pd.read_csv(labels, sep=',')
     labels = load_label_data(labels)
     labels = labels.rename(columns={'filename': 'image'})
@@ -64,24 +64,24 @@ def segment_plates(params):
     metadata = metadata.assign(idx=range(len(metadata)))
     images, _ = get_image_label_gen(folder, metadata, dsize)
     images = [pred2im(images, dsize, idx) for idx in range(len(images))]
-    print("preprocess_input")
+    logger.info("preprocess_input")
     images_pred = [preprocess_input(im) for im in images]
-    print("Inference")
+    logger.info("Inference")
     images_pred = [im.reshape(1, dsize[0], dsize[0], 3) for im in images_pred]
     images_pred = [(model.predict(im) * 255).round() for im in images_pred]
     images = [im.reshape(dsize[0], dsize[0], 3) for im in images]
     images_pred = [pred2im(y, dsize, 0) for y in images_pred]
-    print("Getting contours")
+    logger.info("Getting contours")
     contours = [get_contours_rgb(im, min_area, max_area) for im in images_pred]
-    print("Draw contours")
+    logger.info("Draw contours")
     images_pred = [cv2.drawContours(
         im, c, -1, color, thickness, 8
     ) for im, c in zip(images_pred, contours)]
-    print("Straight bounding boxes")
+    logger.info("Straight bounding boxes")
     bounding_boxes = [cv2.boundingRect(c[0]) for c in contours]
     images_pred = [draw_rectangle(im, b) for im, b in
                    zip(images_pred, bounding_boxes)]
-    print("Min area bounding boxes")
+    logger.info("Min area bounding boxes")
     bounding_boxes = [get_min_area_rectangle(c) for c in contours]
     if debug_level > 0:
         images_pred = [cv2.drawContours(
@@ -89,14 +89,13 @@ def segment_plates(params):
         ) if r is not None else im for im, r in
                        zip(images_pred, bounding_boxes)]
         print_named_images(images_pred, out_folder,
-                           "min_area_bounding_boxes")
-    print("Warp images")
+                           "min_area_bounding_boxes", logger)
+    logger.info("Warp images")
     warpings = [get_warping(q, plate_shape) for q in bounding_boxes]
     images_pred = [warp_image(
         im, w, plate_shape) for (im, w) in zip(images, warpings)]
-    print_named_images(images_pred, out_folder, "plates")
+    print_named_images(images_pred, out_folder, "plates", logger)
 
 
 if __name__ == "__main__":
-    print = logger.info
-    segment_plates(get_params())
+    segment_plates(get_params(), logger)

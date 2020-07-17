@@ -178,8 +178,8 @@ def get_theta(x0, x3):
     return theta
 
 
-def print_named_images(images, folder, name):
-    print(f"Saving {name} images")
+def print_named_images(images, folder, name, logger):
+    logger.info(f"Saving {name} images")
     for image_idx, im in enumerate(images):
         save_image(im, f"{folder}/{name}_{image_idx}.png")
 

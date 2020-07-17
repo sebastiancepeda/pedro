@@ -1,5 +1,6 @@
 import cv2
 import numpy as np
+import pandas as pd
 
 from cv.image_processing import get_xs
 
@@ -68,3 +69,14 @@ def load_label_data(labels):
     labels2 = labels_wh.merge(labels_x, on=['filename'], how='left')
     labels2 = labels2.merge(labels_y, on=['filename'], how='left')
     return labels2
+
+
+def get_metadata(params):
+    metadata = params['metadata']
+    labels = params['labels']
+    metadata = pd.read_csv(metadata)
+    labels = pd.read_csv(labels, sep=',')
+    labels = load_label_data(labels)
+    labels = labels.rename(columns={'filename': 'image'})
+    metadata = metadata.merge(labels, on=['image'], how='left')
+    return metadata

@@ -14,7 +14,7 @@ def load_model(model_class, path, *args, **kwargs):
 
 
 def train_model(model, x, y, params, logger):
-    epochs = 500
+    epochs = 10
     delta = 1 + (epochs // 10)
     criterion = torch.nn.MSELoss(reduction='mean')
     optimizer = torch.optim.SGD(model.parameters(), lr=1e-3)

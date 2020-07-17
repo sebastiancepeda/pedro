@@ -5,6 +5,7 @@
 
 import torch
 import torch.nn as nn
+from loguru import logger
 
 
 def double_conv(in_c, out_c):
@@ -92,4 +93,4 @@ if __name__ == '__main__':
     image = torch.rand((1, 1, 572, 572))
     model = UNet()
     y = model(image)
-    print(y.size())
+    logger.info(y.size())

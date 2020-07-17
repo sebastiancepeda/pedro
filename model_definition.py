@@ -1,7 +1,7 @@
 import segmentation_models as sm
 from segmentation_models import (Linknet)
 from segmentation_models import get_preprocessing
-from tensorflow import keras
+from cv.tensorflow_utils import keras
 
 
 def get_model_definition():
