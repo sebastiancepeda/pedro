@@ -1,7 +1,7 @@
 import cv2
 import numpy as np
 
-from image_processing import get_xs
+from cv.image_processing import get_xs
 
 
 def load_image(row, folder, dsize):

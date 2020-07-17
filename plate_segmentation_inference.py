@@ -6,7 +6,7 @@ from loguru import logger
 
 from data_source import (
     get_image_label_gen, load_label_data)
-from image_processing import (
+from cv.image_processing import (
     get_contours,
     print_named_images,
     get_warping,
