@@ -7,7 +7,6 @@ from loguru import logger
 from data_source import (
     get_image_label_gen, load_label_data)
 from image_processing import (
-    get_quadrilateral,
     get_contours,
     print_named_images,
     get_warping,
@@ -44,16 +43,18 @@ def segment_plates(params):
     folder = params['folder']
     dsize = params['dsize']
     #
-    output_folder = f"{folder}/output_plate_segmentation"
-    print("Loading model")
-    model, preprocess_input = get_model_definition()
-    model.load_weights(model_file)
     plate_shape = (200, 50)
     min_area = 20 * 80
     max_area = 100 * 200
     thickness = 3
     color = (255, 0, 0)
-    contours_color = (0, 255, 0)
+    contours_color = (0, 0, 255)
+    debug_level = 0
+    #
+    out_folder = f"{folder}/output_plate_segmentation"
+    print("Loading model")
+    model, preprocess_input = get_model_definition()
+    model.load_weights(model_file)
     print("Loading data")
     labels = pd.read_csv(labels, sep=',')
     labels = load_label_data(labels)
@@ -77,27 +78,23 @@ def segment_plates(params):
         im, c, -1, color, thickness, 8
     ) for im, c in zip(images_pred, contours)]
     print("Straight bounding boxes")
-    bounding_boxes = [cv2.boundingRect(c) for c in contours]
+    bounding_boxes = [cv2.boundingRect(c[0]) for c in contours]
     images_pred = [draw_rectangle(im, b) for im, b in
                    zip(images_pred, bounding_boxes)]
-    print_named_images(images_pred, output_folder, "straight_bounding_boxes")
     print("Min area bounding boxes")
     bounding_boxes = [get_min_area_rectangle(c) for c in contours]
-    images_pred = [draw_rectangle(im, b) for im, b in
-                   zip(images_pred, bounding_boxes)]
-    print_named_images(images_pred, output_folder, "min_area_bounding_boxes")
-    print("Quadrilaterals")
-    contours = [get_quadrilateral(
-        c[0]) if c is not None and len(c) > 0 else None for c in contours]
-    images_pred = [cv2.drawContours(
-        im, [r], 0, contours_color, thickness
-    ) if r is not None else im for im, r in zip(images_pred, contours)]
-    print_named_images(images_pred, output_folder, "quadrilaterals")
+    if debug_level > 0:
+        images_pred = [cv2.drawContours(
+            im, [r], 0, contours_color, thickness
+        ) if r is not None else im for im, r in
+                       zip(images_pred, bounding_boxes)]
+        print_named_images(images_pred, out_folder,
+                           "min_area_bounding_boxes")
     print("Warp images")
-    warpings = [get_warping(q, plate_shape) for q in contours]
+    warpings = [get_warping(q, plate_shape) for q in bounding_boxes]
     images_pred = [warp_image(
         im, w, plate_shape) for (im, w) in zip(images, warpings)]
-    print_named_images(images_pred, output_folder, "plates")
+    print_named_images(images_pred, out_folder, "plates")
 
 
 if __name__ == "__main__":
