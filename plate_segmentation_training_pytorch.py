@@ -2,7 +2,7 @@ import pathlib
 
 from loguru import logger
 
-from cv.tensorflow.tensorflow_utils import train_model
+from cv.pytorch.pytorch_utils import train_model
 from io_utils.data_source import get_image_label_gen, get_metadata
 from cv.tensorflow.model_definition import get_model_definition
 
@@ -13,9 +13,9 @@ def get_params():
     params = {
         'folder': folder,
         'epochs': 1000,
-        'dsize': (768, 768),
+        'dsize': (572, 572),
         'model_folder': f'{folder}/model',
-        'model_file': f'{folder}/model/best_model.h5',
+        'model_file': f'{folder}/model/best_model.model',
         'labels': f"{folder}/labels_plates.csv",
         'metadata': f"{folder}/files.csv",
     }

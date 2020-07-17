@@ -1,6 +1,6 @@
 import torch
 
-from cv.unet import UNet
+from cv.pytorch.unet import UNet
 
 
 def save_model(model, path):
