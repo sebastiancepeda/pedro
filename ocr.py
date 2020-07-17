@@ -22,7 +22,7 @@ from image_processing import (
 
 def get_params():
     path = str(pathlib.Path().absolute())
-    folder = f'{path}/plates'
+    folder = f'{path}/data/plates'
     params = {
         'folder': folder,
         'labels': f"{folder}/labels_plates.csv",
@@ -36,11 +36,12 @@ def segment_plates(params):
     metadata = params['metadata']
     folder = params['folder']
     #
+    thickness = 3
+    color = (255, 0, 0)
+    #
     input_folder = f"{folder}/output_plate_segmentation"
     output_folder = f"{folder}/output"
     print("Loading model")
-    thickness = 3
-    color = (255, 0, 0)
     print("Loading data")
     labels = pd.read_csv(labels, sep=',')
     labels = load_label_data(labels)
@@ -56,6 +57,7 @@ def segment_plates(params):
     images = [clahe.apply(
         cv2.cvtColor(im, cv2.COLOR_BGR2GRAY)) for im in images]
     images = [255 - im if has_dark_font(im) else im for im in images]
+    print_named_images(images, output_folder, "images")
     images = [get_binary_im(im) for im in images]
     images = [print_limits(im) for im in images]
     # print_named_images(images, output_folder, "images_mask")
