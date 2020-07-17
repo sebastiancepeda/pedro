@@ -7,7 +7,7 @@ from loguru import logger
 from data_source import (
     get_image_label_gen, load_label_data)
 from cv.image_processing import (
-    get_contours,
+    get_contours_rgb,
     print_named_images,
     get_warping,
     warp_image,
@@ -72,7 +72,7 @@ def segment_plates(params):
     images = [im.reshape(dsize[0], dsize[0], 3) for im in images]
     images_pred = [pred2im(y, dsize, 0) for y in images_pred]
     print("Getting contours")
-    contours = [get_contours(im, min_area, max_area) for im in images_pred]
+    contours = [get_contours_rgb(im, min_area, max_area) for im in images_pred]
     print("Draw contours")
     images_pred = [cv2.drawContours(
         im, c, -1, color, thickness, 8

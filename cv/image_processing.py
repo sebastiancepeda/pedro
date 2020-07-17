@@ -8,17 +8,21 @@ def save_image(im, filename):
     im.save(filename)
 
 
-def get_contours(im, min_area, max_area):
+def get_contours_rgb(im, min_area, max_area):
     im = cv2.cvtColor(im, cv2.COLOR_BGR2GRAY)
     hulls = get_contours_gray(im, min_area, max_area)
     return hulls
 
 
 def get_contours_gray(im, min_area, max_area):
-    # im = cv2.blur(im, (3, 3))
     ret, thresh = cv2.threshold(im, 50, 255, cv2.THRESH_BINARY)
-    contours, hierarchy = cv2.findContours(
-        thresh, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+    hulls = get_contours_binary(thresh, min_area, max_area)
+    return hulls
+
+
+def get_contours_binary(im, min_area, max_area):
+    contours, hierarchy = cv2.findContours(im, cv2.RETR_TREE,
+                                           cv2.CHAIN_APPROX_SIMPLE)
     contours = [c for c in contours if cv2.contourArea(c) > min_area]
     contours = [c for c in contours if cv2.contourArea(c) < max_area]
     hulls = []
@@ -30,7 +34,7 @@ def get_contours_gray(im, min_area, max_area):
 def get_lines(edges_im):
     lines = cv2.HoughLinesP(
         image=edges_im,
-        rho=50,
+        rho=1,
         theta=1 * np.pi / 180,
         threshold=50,
         minLineLength=50,
@@ -192,7 +196,7 @@ def has_dark_font(im):
 
 def get_binary_im(im):
     if im is not None:
-        im = cv2.threshold(im, im.mean(), 255, cv2.THRESH_BINARY)[1]
+        im = cv2.threshold(im, np.median(im), 255, cv2.THRESH_BINARY)[1]
     return im
 
 

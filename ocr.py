@@ -2,23 +2,25 @@
 @author: Sebastian Cepeda
 @email: sebastian.cepeda.fuentealba@gmail.com
 """
+from loguru import logger
+
+print = logger.info
 import glob
 import pathlib
 
 import cv2
 import numpy as np
 import pandas as pd
-from loguru import logger
 
-from data_source import (
-    load_label_data)
 from cv.image_processing import (
     print_named_images,
     has_dark_font,
     get_binary_im,
-    print_limits,
-    get_contours_gray,
+    get_contours_binary,
+    draw_lines,
 )
+from data_source import (
+    load_label_data)
 
 
 def get_params():
@@ -39,6 +41,8 @@ def segment_plates(params):
     #
     thickness = 3
     color = (255, 0, 0)
+    min_area = 50 ** 2
+    max_area = 1000 ** 2
     #
     input_folder = f"{folder}/output_plate_segmentation"
     output_folder = f"{folder}/output"
@@ -58,26 +62,40 @@ def segment_plates(params):
     images = [clahe.apply(cv2.cvtColor(im, cv2.COLOR_BGR2GRAY)) for im in
               images]
     images = [255 - im if has_dark_font(im) else im for im in images]
-    # print_named_images(images, output_folder, "images")
     binary_ims = [get_binary_im(im) for im in images]
-    edges = [cv2.Canny(im, 100, 200) for im in binary_ims]
-    # print_named_images(edges, output_folder, "edges")
+    # print_named_images(binary_ims, output_folder, "binary_ims")
+    images = [cv2.blur(im, (3, 3)) for im in images]
+    edges_set = [cv2.Canny(im, 100, 200) for im in images]
+    contours = [get_contours_binary(im, min_area, max_area) for im in
+                edges_set]
+    debug_contours = [cv2.drawContours(
+        cv2.cvtColor(im, cv2.COLOR_GRAY2RGB), c, -1, color, thickness, 8
+    ) for im, c in zip(edges_set, contours)]
+    # print_named_images(debug_contours, output_folder, "debug_contours")
+    lines_set = [
+        cv2.HoughLinesP(
+            e, rho=2, theta=1 * np.pi / 180, threshold=100, minLineLength=100,
+            maxLineGap=10
+        ) for e in edges_set]
+    debug_lines = [draw_lines(cv2.cvtColor(im, cv2.COLOR_GRAY2RGB), lines) for
+                   im, lines in zip(edges_set, lines_set)]
+    # print_named_images(debug_lines, output_folder, "debug_lines")
     debug_images = [np.concatenate((im, binary, edge), axis=1)
-                    for im, binary, edge in zip(images, binary_ims, edges)]
+                    for im, binary, edge in zip(images, binary_ims, edges_set)]
     print_named_images(debug_images, output_folder, "binary_images")
+    """
     binary_ims = [print_limits(im) for im in binary_ims]
     # print_named_images(images, output_folder, "images_mask")
     print("Getting contours")
-    min_area = 14 ** 2
-    max_area = 40 ** 2
-    contours = [get_contours_gray(im, min_area, max_area) for im in binary_ims]
+    contours = [get_contours_binary(im, min_area, max_area) for im in
+                binary_ims]
     print("Draw contours")
     binary_ims = [cv2.drawContours(
         cv2.cvtColor(im, cv2.COLOR_GRAY2RGB), c, -1, color, thickness, 8
     ) for im, c in zip(binary_ims, contours)]
     print_named_images(binary_ims, output_folder, "mask_contours")
+    """
 
 
 if __name__ == "__main__":
-    print = logger.info
     segment_plates(get_params())
