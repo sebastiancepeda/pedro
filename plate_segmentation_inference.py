@@ -13,13 +13,14 @@ from image_processing import (
     get_warping,
     warp_image,
     pred2im,
+    get_min_area_rectangle,
 )
 from model_definition import get_model_definition
 
 
 def get_params():
     path = str(pathlib.Path().absolute())
-    folder = f'{path}/plates'
+    folder = f'{path}/data/plates'
     params = {
         'folder': folder,
         'dsize': (768, 768),
@@ -28,6 +29,12 @@ def get_params():
         'metadata': f"{folder}/files.csv",
     }
     return params
+
+
+def draw_rectangle(im, r):
+    x, y, w, h = r
+    im = cv2.rectangle(im, (x, y), (x + w, y + h), (0, 255, 0), 2)
+    return im
 
 
 def segment_plates(params):
@@ -42,8 +49,8 @@ def segment_plates(params):
     model, preprocess_input = get_model_definition()
     model.load_weights(model_file)
     plate_shape = (200, 50)
-    min_area = 20*80
-    max_area = 100*200
+    min_area = 20 * 80
+    max_area = 100 * 200
     thickness = 3
     color = (255, 0, 0)
     contours_color = (0, 255, 0)
@@ -69,10 +76,19 @@ def segment_plates(params):
     images_pred = [cv2.drawContours(
         im, c, -1, color, thickness, 8
     ) for im, c in zip(images_pred, contours)]
-    print("Getting quadrilaterals")
+    print("Straight bounding boxes")
+    bounding_boxes = [cv2.boundingRect(c) for c in contours]
+    images_pred = [draw_rectangle(im, b) for im, b in
+                   zip(images_pred, bounding_boxes)]
+    print_named_images(images_pred, output_folder, "straight_bounding_boxes")
+    print("Min area bounding boxes")
+    bounding_boxes = [get_min_area_rectangle(c) for c in contours]
+    images_pred = [draw_rectangle(im, b) for im, b in
+                   zip(images_pred, bounding_boxes)]
+    print_named_images(images_pred, output_folder, "min_area_bounding_boxes")
+    print("Quadrilaterals")
     contours = [get_quadrilateral(
         c[0]) if c is not None and len(c) > 0 else None for c in contours]
-    print("Drawing quadrilaterals")
     images_pred = [cv2.drawContours(
         im, [r], 0, contours_color, thickness
     ) if r is not None else im for im, r in zip(images_pred, contours)]

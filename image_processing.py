@@ -66,7 +66,7 @@ def image_set2list(y_train_pred, y_val_pred):
     return images
 
 
-def get_rectangle(contours):
+def get_min_area_rectangle(contours):
     contour = contours[0]
     rectangle = cv2.minAreaRect(contour)
     rectangle = cv2.boxPoints(rectangle)
