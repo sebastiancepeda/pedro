@@ -4,7 +4,7 @@ import numpy as np
 from loguru import logger
 
 from cv.pytorch.pytorch_utils import train_model
-from cv.pytorch.unet import UNet
+from cv.pytorch.unet_small import UNetSmall
 from io_utils.data_source import get_image_label_gen, get_metadata
 
 
@@ -42,7 +42,7 @@ def train_plate_segmentation(params):
         'in_channels': 3,
         'out_channels': 2,
     }
-    train_model(x_train, y_train, x_val, y_val, UNet, model_params, params,
+    train_model(x_train, y_train, x_val, y_val, UNetSmall, model_params, params,
                 logger)
 
 

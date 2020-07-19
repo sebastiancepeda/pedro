@@ -27,10 +27,10 @@ def crop_img(in_tensor, out_tensor):
     return result
 
 
-class UNet(nn.Module):
+class UNetSmall(nn.Module):
 
     def __init__(self, in_channels, out_channels):
-        super(UNet, self).__init__()
+        super(UNetSmall, self).__init__()
         # Down convolutions
         self.max_pool_2x2 = nn.MaxPool2d(kernel_size=2, stride=2)
         self.down_conv_1 = double_conv(in_channels, 64)
@@ -66,22 +66,9 @@ class UNet(nn.Module):
         x1 = self.down_conv_1(image)
         x3 = self.max_pool_2x2(x1)
         x3 = self.down_conv_2(x3)
-        x5 = self.max_pool_2x2(x3)
-        x5 = self.down_conv_3(x5)
-        x7 = self.max_pool_2x2(x5)
-        x7 = self.down_conv_4(x7)
-        x = self.max_pool_2x2(x7)
-        x = self.down_conv_5(x)
         # Decoder
-        x = self.up_trans_1(x)
-        y = crop_img(x7, x)
-        x = self.up_conv_1(torch.cat([x, y], 1))
-        x = self.up_trans_2(x)
-        y = crop_img(x5, x)
-        x = self.up_conv_2(torch.cat([x, y], 1))
-        x = self.up_trans_3(x)
-        y = crop_img(x3, x)
-        x = self.up_conv_3(torch.cat([x, y], 1))
+        y = crop_img(x3, x3)
+        x = self.up_conv_3(torch.cat([x3, y], 1))
         x = self.up_trans_4(x)
         y = crop_img(x1, x)
         x = self.up_conv_4(torch.cat([x, y], 1))

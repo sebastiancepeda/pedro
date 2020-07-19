@@ -14,7 +14,7 @@ from cv.image_processing import (
     pred2im,
     get_min_area_rectangle,
 )
-from cv.tensorflow.model_definition import get_model_definition
+from cv.seg_models.model_definition import get_model_definition
 
 
 def get_params():

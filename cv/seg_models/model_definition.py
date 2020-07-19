@@ -1,6 +1,6 @@
 import segmentation_models as sm
 
-from cv.tensorflow.tensorflow_utils import keras
+from tensorflow import keras
 
 
 def get_model_definition():

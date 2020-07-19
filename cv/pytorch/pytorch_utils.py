@@ -1,6 +1,6 @@
 import torch
 
-from cv.pytorch.unet import (UNet, crop_img)
+from cv.pytorch.unet import (crop_img)
 
 
 def save_model(model, path):
@@ -42,43 +42,14 @@ def train_model(x_train, y_train, x_val, y_val, model_definition, model_params,
         for idx in range(len(x_train)):
             x = torch.reshape(x_train[idx, :, :, :], (1, *shape1))
             y = torch.reshape(y_train[idx, :, :, :], (1, *shape2))
-            # print(x.shape)
-            # print(y.shape)
             y_pred = model(x)
             loss = criterion(y_pred, crop_img(y, y_pred))
-            if t % delta == (delta - 1):
-                logger.info(f"Loss [{t}]: {loss.item()}")
-                save_model(model, params['model_file'])
             optimizer.zero_grad()
             loss.backward()
             optimizer.step()
+            logger.info(f"Epoch, image: [{t}, {idx}]")
+        if t % delta == (delta - 1):
+            logger.info(f"Loss [{t}]: {loss.item()}")
+            save_model(model, params['model_file'])
     load_model(model_definition, params['model_file'], **model_params)
     return model
-
-
-def test_train_model():
-    from loguru import logger
-
-    logger.info(f"Start")
-    params = {
-        'path': './test.model',
-        'dsize': (572, 572),
-        'im_channels': 1,
-    }
-    x_train = torch.rand((1, 1, 572, 572))
-    y_train = torch.rand((1, 2, 388, 388))
-    x_val = torch.rand((1, 1, 572, 572))
-    y_val = torch.rand((1, 2, 388, 388))
-    logger.info(f"Call to train_model")
-    model_params = {
-        'in_channels': 1,
-        'out_channels': 2,
-    }
-    trained_model = train_model(x_train, y_train, x_val, y_val, UNet,
-                                model_params, params, logger)
-    assert trained_model is not None
-    print(trained_model)
-
-
-if __name__ == "__main__":
-    test_train_model()
