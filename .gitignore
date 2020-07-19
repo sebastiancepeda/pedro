@@ -1,5 +1,6 @@
 *__pycache__/
 *.zip
+*.pyc
 *.idea/
 *data/
 
