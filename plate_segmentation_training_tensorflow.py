@@ -32,7 +32,12 @@ def train_plate_segmentation(params):
     test_metadata = test_metadata.assign(idx=range(len(test_metadata)))
     x_train, y_train = get_image_label_gen(folder, train_metadata, dsize)
     x_val, y_val = get_image_label_gen(folder, test_metadata, dsize)
-    model_params = {}
+    model_params = {
+        'img_height': dsize[0],
+        'img_width': dsize[1],
+        'in_channels': 3,
+        'out_channels': 2,
+    }
     train_model(x_train, y_train, x_val, y_val, get_model_definition,
                 model_params, params, logger)
 

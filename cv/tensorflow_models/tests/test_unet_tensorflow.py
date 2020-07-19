@@ -16,7 +16,7 @@ def test_train_model():
     params = {
         'dsize': dsize,
         'im_channels': 1,
-        'epochs': 10,
+        'epochs': 2,
         'model_file': 'test.model',
         'model_folder': './',
     }
@@ -36,7 +36,3 @@ def test_train_model():
         params, logger)
     assert trained_model is not None
     print(trained_model)
-
-
-if __name__ == '__main__':
-    test_train_model()
