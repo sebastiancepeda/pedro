@@ -12,7 +12,7 @@ def test_train_model():
     from loguru import logger
 
     logger.info(f"Start")
-    dsize = (572, 572)
+    dsize = (576, 576)
     params = {
         'dsize': dsize,
         'im_channels': 1,
@@ -20,10 +20,10 @@ def test_train_model():
         'model_file': 'test.model',
         'model_folder': './',
     }
-    x_train = np.random.rand(1, 1, dsize[0], dsize[1])
-    y_train = np.random.rand(1, 2, dsize[0], dsize[1])
-    x_val = np.random.rand(1, 1, dsize[0], dsize[1])
-    y_val = np.random.rand(1, 2, dsize[0], dsize[1])
+    x_train = np.random.rand(1, dsize[0], dsize[1], 1)
+    y_train = np.random.rand(1, dsize[0], dsize[1], 2)
+    x_val = np.random.rand(1, dsize[0], dsize[1], 1)
+    y_val = np.random.rand(1, dsize[0], dsize[1], 2)
     logger.info(f"Call to train_model")
     model_params = {
         'img_height': dsize[0],
@@ -36,3 +36,7 @@ def test_train_model():
         params, logger)
     assert trained_model is not None
     print(trained_model)
+
+
+if __name__ == '__main__':
+    test_train_model()

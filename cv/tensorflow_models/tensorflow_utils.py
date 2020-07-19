@@ -3,7 +3,8 @@ import os
 from tensorflow import keras
 
 
-def train_model(x_train, y_train, x_val, y_val, get_model_definition, model_params, params,
+def train_model(x_train, y_train, x_val, y_val, get_model_definition,
+                model_params, params,
                 logger):
     epochs = params['epochs']
     model_file = params['model_file']
@@ -31,3 +32,4 @@ def train_model(x_train, y_train, x_val, y_val, get_model_definition, model_para
         callbacks=callbacks,
     )
     model.load_weights(model_file)
+    return model
