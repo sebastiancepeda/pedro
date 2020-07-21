@@ -1,2 +1,2 @@
 # Pedro
-Pedro: PlatE Detection RecognitiOn
+Pedro: PlatE Detection RecOgnition
