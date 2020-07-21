@@ -15,7 +15,7 @@ from cv.image_processing import (
     get_min_area_rectangle,
 )
 # from cv.seg_models.model_definition import get_model_definition
-from cv.tensorflow_models.unet import get_model_definition
+from cv.tensorflow_models.unet_little import get_model_definition
 
 
 def get_params():
