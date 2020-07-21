@@ -2,7 +2,7 @@ import pathlib
 
 from loguru import logger
 
-from cv.tensorflow_models.model_definition import get_model_definition
+from cv.tensorflow_models.unet import get_model_definition
 from cv.tensorflow_models.tensorflow_utils import train_model
 from io_utils.data_source import get_image_label_gen, get_metadata
 

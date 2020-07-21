@@ -4,7 +4,7 @@
 """
 import numpy as np
 
-from cv.tensorflow_models.model_definition import get_model_definition
+from cv.tensorflow_models.unet import get_model_definition
 from cv.tensorflow_models.tensorflow_utils import train_model
 
 

@@ -14,18 +14,26 @@ from cv.image_processing import (
     pred2im,
     get_min_area_rectangle,
 )
-from cv.seg_models.model_definition import get_model_definition
+# from cv.seg_models.model_definition import get_model_definition
+from cv.tensorflow_models.unet import get_model_definition
 
 
 def get_params():
     path = str(pathlib.Path().absolute())
     folder = f'{path}/data/plates'
+    dsize = (576, 576)
     params = {
         'folder': folder,
-        'dsize': (768, 768),
+        'dsize': dsize,
         'model_file': f'{folder}/model/best_model.h5',
         'labels': f"{folder}/labels_plates.csv",
         'metadata': f"{folder}/files.csv",
+        'model_params': {
+            'img_height': dsize[0],
+            'img_width': dsize[1],
+            'in_channels': 3,
+            'out_channels': 2,
+        }
     }
     return params
 
@@ -53,7 +61,8 @@ def segment_plates(params, logger):
     #
     out_folder = f"{folder}/output_plate_segmentation"
     logger.info("Loading model")
-    model, preprocess_input = get_model_definition()
+    model_params = params['model_params']
+    model, preprocess_input = get_model_definition(**model_params)
     model.load_weights(model_file)
     logger.info("Loading data")
     labels = pd.read_csv(labels, sep=',')
@@ -77,6 +86,7 @@ def segment_plates(params, logger):
     images_pred = [cv2.drawContours(
         im, c, -1, color, thickness, 8
     ) for im, c in zip(images_pred, contours)]
+    print_named_images(images_pred, out_folder, "contours", logger)
     logger.info("Straight bounding boxes")
     bounding_boxes = [cv2.boundingRect(c[0]) for c in contours]
     images_pred = [draw_rectangle(im, b) for im, b in
