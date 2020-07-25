@@ -68,12 +68,12 @@ def segment_plates(logger, params):
         sigma=1.0,  # 8.0,
         theta=degrees * np.pi / 180,
         lambd=10.0,
-        gamma=0.6,#0.5,
+        gamma=0.6,  # 0.5,
         psi=0,
         ktype=cv2.CV_32F)
     g_kernel = g_kernel - g_kernel.mean()
     images_gabor = [cv2.filter2D(im, cv2.CV_8UC3, g_kernel) for im in images]
-    print_named_images(images_gabor, output_folder, "images_gabor", logger)
+    print_named_images(images_gabor, metadata, output_folder, "images_gabor", logger)
     images_sobel_canny = [cv2.Canny(im, 100, 200) for im in images_sobel_y]
     # print_named_images(images_sobel_canny, output_folder, "images_sobel_canny", logger)
     binary_ims = [get_binary_im(im) for im in images]
@@ -85,7 +85,7 @@ def segment_plates(logger, params):
     debug_contours = [cv2.drawContours(
         cv2.cvtColor(im, cv2.COLOR_GRAY2RGB), c, -1, color, thickness, 8
     ) for im, c in zip(edges_set, contours)]
-    print_named_images(debug_contours, output_folder, "debug_contours", logger)
+    # print_named_images(debug_contours, output_folder, "debug_contours", logger)
     lines_set = [
         cv2.HoughLinesP(
             e, rho=2, theta=1 * np.pi / 180, threshold=100, minLineLength=100,
@@ -94,9 +94,10 @@ def segment_plates(logger, params):
     debug_lines = [draw_lines(cv2.cvtColor(im, cv2.COLOR_GRAY2RGB), lines) for
                    im, lines in zip(edges_set, lines_set)]
     # print_named_images(debug_lines, output_folder, "debug_lines", logger)
-    debug_images = [np.concatenate((im, binary, edge), axis=1)
-                    for im, binary, edge in zip(images, binary_ims, edges_set)]
-    print_named_images(debug_images, output_folder, "binary_images", logger)
+    debug_images = [np.concatenate((im, binary, edge, im_gabor), axis=1)
+                    for im, binary, edge, im_gabor in zip(
+            images, binary_ims, edges_set, images_gabor)]
+    print_named_images(debug_images, metadata, output_folder, "binary_images", logger)
     """
     binary_ims = [print_limits(im) for im in binary_ims]
     # print_named_images(images, output_folder, "images_mask", logger)

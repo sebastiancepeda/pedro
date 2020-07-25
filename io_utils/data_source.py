@@ -3,6 +3,7 @@ import numpy as np
 import pandas as pd
 
 from cv.image_processing import get_xs
+from io_utils.read_polygons_json import get_labels_plates_text
 
 
 def load_image(row, folder, dsize):
@@ -71,7 +72,7 @@ def load_label_data(labels):
     return labels2
 
 
-def get_metadata(params):
+def get_plates_bounding_metadata(params):
     metadata = params['metadata']
     labels = params['labels']
     metadata = pd.read_csv(metadata)
@@ -79,4 +80,18 @@ def get_metadata(params):
     labels = load_label_data(labels)
     labels = labels.rename(columns={'filename': 'image'})
     metadata = metadata.merge(labels, on=['image'], how='left')
+    return metadata
+
+
+def get_plates_text_metadata(params):
+    metadata = params['metadata']
+    labels = params['labels']
+    metadata = pd.read_csv(metadata)
+    labels = get_labels_plates_text(labels)
+    labels = labels.assign(image_name=labels.filename)
+    metadata = metadata.assign(image_name=metadata.image)
+    labels.image_name = labels.image_name.str.split('_').str[1]
+    labels.image_name = labels.image_name.str.split('.').str[0]
+    metadata.image_name = metadata.image_name.str.split('.').str[0]
+    metadata = metadata.merge(labels, on=['image_name'], how='left')
     return metadata

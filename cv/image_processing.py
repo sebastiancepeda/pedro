@@ -178,10 +178,11 @@ def get_theta(x0, x3):
     return theta
 
 
-def print_named_images(images, folder, name, logger):
+def print_named_images(images, metadata, folder, name, logger):
     logger.info(f"Saving {name} images")
-    for image_idx, im in enumerate(images):
-        save_image(im, f"{folder}/{name}_{image_idx}.png")
+    for image_filename, im in zip(metadata.image, images):
+        image_name = image_filename.split('.')[0]
+        save_image(im, f"{folder}/{name}_{image_name}.png")
 
 
 def has_dark_font(im):
