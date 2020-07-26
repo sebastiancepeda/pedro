@@ -1,7 +1,7 @@
 from loguru import logger
 
 from cv.tensorflow_models.tensorflow_utils import train_model
-from cv.tensorflow_models.unet_little import get_model_definition
+from cv.tensorflow_models.unet_little import get_model_definition, normalize_image_shape
 from io_utils.data_source import get_image_label_gen, get_plates_text_metadata
 
 
@@ -10,8 +10,7 @@ def get_params():
     folder = f'{path}/plates/output_plate_segmentation'
     width = 200
     height = 50
-    width = width // 16 * 16 + 16 * int(width > 0)
-    height = height // 16 * 16 + 16 * int(height > 0)
+    height, width = normalize_image_shape(height, width)
     dsize = (height, width)
     in_channels = 1
     out_channels = 2

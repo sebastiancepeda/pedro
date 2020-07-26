@@ -14,6 +14,13 @@ def identity_function(x):
     return x
 
 
+def normalize_image_shape(height, width):
+    base = (2 ** 4)
+    width = (width // base) * base + base * int(width > 0)
+    height = (height // base) * base + base * int(height > 0)
+    return height, width
+
+
 def get_model_definition(img_height, img_width, in_channels, out_channels):
     base = (2 ** 4)
     msg = "{actual} not multiple of " + str(base)
