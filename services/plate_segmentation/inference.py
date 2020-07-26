@@ -18,8 +18,8 @@ from io_utils.data_source import (get_image_label_gen, load_label_data)
 
 
 def get_params():
-    path = str(pathlib.Path().absolute())
-    folder = f'{path}/data/plates'
+    path = '/home/sebastian/projects/pedro/data/'
+    folder = f'{path}/plates'
     dsize = (576, 576)
     params = {
         'folder': folder,

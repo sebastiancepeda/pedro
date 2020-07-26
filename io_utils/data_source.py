@@ -6,16 +6,17 @@ from cv.image_processing import get_xs
 from io_utils.read_polygons_json import get_labels_plates_text
 
 
-def load_image(row, folder, dsize):
+def load_image(row, folder, dsize, in_channels):
     image = row.image
-    x0, x1, x2, x3 = row.x_0, row.x_1, row.x_2, row.x_3
-    y0, y1, y2, y3 = row.y_0, row.y_1, row.y_2, row.y_3
+    x0, x1, x2, x3 = row.x0, row.x1, row.x2, row.x3
+    y0, y1, y2, y3 = row.y0, row.y1, row.y2, row.y3
     color = (255, 255, 255)
     im_file = f"{folder}/{image}"
     im = cv2.imread(im_file)
-    assert im is not None
+    assert im is not None, f"Error while reading image: {im_file}"
     im = cv2.cvtColor(im, cv2.COLOR_BGR2GRAY)
-    im = cv2.cvtColor(im, cv2.COLOR_GRAY2RGB)
+    if in_channels == 3:
+        im = cv2.cvtColor(im, cv2.COLOR_GRAY2RGB)
     gt = np.zeros((im.shape[0], im.shape[1]))
     gt = gt.astype('uint8')
     pts = np.array([
@@ -31,19 +32,23 @@ def load_image(row, folder, dsize):
     filt = gt >= threshold
     gt[filt] = 1
     gt[~filt] = 0
-    im = cv2.resize(im, dsize=dsize, interpolation=cv2.INTER_CUBIC)
-    gt = cv2.resize(gt, dsize=dsize, interpolation=cv2.INTER_CUBIC)
+    dsize_cv2 = (dsize[1], dsize[0])
+    im = cv2.resize(im, dsize=dsize_cv2, interpolation=cv2.INTER_CUBIC)
+    gt = cv2.resize(gt, dsize=dsize_cv2, interpolation=cv2.INTER_CUBIC)
     return im, gt
 
 
-def get_image_label_gen(folder, metadata, dsize):
+def get_image_label_gen(folder, metadata, dsize, in_channels, out_channels):
     set_size = metadata.shape[0]
-    x = np.zeros((set_size, dsize[0], dsize[1], 3))
-    y = np.zeros((set_size, dsize[0], dsize[1], 2))
+    x = np.zeros((set_size, dsize[0], dsize[1], in_channels))
+    y = np.zeros((set_size, dsize[0], dsize[1], out_channels))
     for row in metadata.itertuples():
         idx = row.idx
-        im, gt = load_image(row, folder, dsize)
-        x[idx, :, :, :] = im[:, :, 0:3]
+        im, gt = load_image(row, folder, dsize, in_channels)
+        if in_channels == 3:
+            x[idx, :, :, :] = im[:, :, 0:in_channels]
+        else:
+            x[idx, :, :, 0] = im[:, :]
         y[idx, :, :, 0] = gt
         y[idx, :, :, 1] = gt * -1.0 + 1.0
     return x, y
@@ -57,14 +62,14 @@ def load_label_data(labels):
         columns='point_idx',
         values='x'
     )
-    labels_x.columns = [f"x_{c}" for c in labels_x.columns]
+    labels_x.columns = [f"x{c}" for c in labels_x.columns]
     labels_x = labels_x.reset_index(drop=False)
     labels_y = labels.pivot(
         index='filename',
         columns='point_idx',
         values='y'
     )
-    labels_y.columns = [f"y_{c}" for c in labels_y.columns]
+    labels_y.columns = [f"y{c}" for c in labels_y.columns]
     labels_y = labels_y.reset_index(drop=False)
     labels_wh = labels.drop_duplicates(['filename'])[['filename', 'w', 'h']]
     labels2 = labels_wh.merge(labels_x, on=['filename'], how='left')
@@ -92,6 +97,7 @@ def get_plates_text_metadata(params):
     metadata = metadata.assign(image_name=metadata.image)
     labels.image_name = labels.image_name.str.split('_').str[1]
     labels.image_name = labels.image_name.str.split('.').str[0]
+    metadata.image_name = metadata.image_name.str.split('_').str[1]
     metadata.image_name = metadata.image_name.str.split('.').str[0]
     metadata = metadata.merge(labels, on=['image_name'], how='left')
     return metadata

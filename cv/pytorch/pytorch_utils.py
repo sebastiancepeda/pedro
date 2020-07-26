@@ -22,10 +22,11 @@ def standardize(tensor, size, im_channels):
     return tensor
 
 
-def train_model(x_train, y_train, x_val, y_val, model_definition, model_params,
+def train_model(x_train, y_train, x_val, y_val, model_definition,
                 params, logger):
     size = params['dsize']
     im_channels = params['im_channels']
+    model_params = params['model_params']
     x_train = standardize(x_train, size, im_channels)
     y_train = standardize(y_train, size, im_channels)
     x_val = standardize(x_val, size, im_channels)

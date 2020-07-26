@@ -22,8 +22,8 @@ from io_utils.data_source import (
 
 
 def get_params():
-    path = str(pathlib.Path().absolute())
-    folder = f'{path}/data/plates'
+    path = '/home/sebastian/projects/pedro/data/'
+    folder = f'{path}/plates'
     params = {
         'folder': folder,
         'labels': f"{folder}/labels_plates.csv",
