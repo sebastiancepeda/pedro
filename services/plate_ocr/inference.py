@@ -18,27 +18,21 @@ from io_utils.data_source import (get_image_label_gen,
 
 def get_params():
     path = '/home/sebastian/projects/pedro/data'
-    input_folder = f'{path}/plates/output_plate_segmentation'
-    output_folder = f'{path}/plates/output_plate_text_segmentation'
+    input_folder = f'{path}/plates/output_plate_text_segmentation'
+    output_folder = f'{path}/plates/output_plate_ocr'
     width = 200
     height = 50
     height, width = normalize_image_shape(height, width)
     dsize = (height, width)
+    alphabet = 'abcdefghijklmnopqrstuvwxyz0123456789'
     in_channels = 1
-    out_channels = 2
+    out_channels = len(alphabet)+1
     params = {
         'input_folder': input_folder,
         'output_folder': output_folder,
         'dsize': dsize,
         'model_file': f'{input_folder}/model/best_model.h5',
-        'labels': f"{input_folder}/labels_plates_text-name_20200724050222.json",
         'metadata': f"{input_folder}/files.csv",
-        'model_params': {
-            'img_height': dsize[0],
-            'img_width': dsize[1],
-            'in_channels': in_channels,
-            'out_channels': out_channels,
-        }
     }
     return params
 

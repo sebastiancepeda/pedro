@@ -6,51 +6,54 @@ from cv.image_processing import get_xs
 from io_utils.read_polygons_json import get_labels_plates_text
 
 
-def load_image(row, folder, dsize, in_channels):
-    image = row.image
-    x0, x1, x2, x3 = row.x0, row.x1, row.x2, row.x3
-    y0, y1, y2, y3 = row.y0, row.y1, row.y2, row.y3
-    color = (255, 255, 255)
+def load_image(im_data, folder, dsize, in_channels, alphabet):
+    dsize_cv2 = (dsize[1], dsize[0])
+    image = im_data.image.values[0]
+    # Image load
     im_file = f"{folder}/{image}"
     im = cv2.imread(im_file)
     assert im is not None, f"Error while reading image: {im_file}"
     im = cv2.cvtColor(im, cv2.COLOR_BGR2GRAY)
     if in_channels == 3:
         im = cv2.cvtColor(im, cv2.COLOR_GRAY2RGB)
-    gt = np.zeros((im.shape[0], im.shape[1]))
-    gt = gt.astype('uint8')
-    pts = np.array([
-        [x0, y0],
-        [x1, y1],
-        [x2, y2],
-        [x3, y3]], np.int32)
-    p0, p1, p2, p3 = get_xs(pts)
-    pts = np.array([p0, p1, p2, p3], np.int32)
-    pts = [pts.reshape((-1, 1, 2))]
-    cv2.fillPoly(gt, pts, color=color)
-    threshold = gt.mean()
-    filt = gt >= threshold
-    gt[filt] = 1
-    gt[~filt] = 0
-    dsize_cv2 = (dsize[1], dsize[0])
     im = cv2.resize(im, dsize=dsize_cv2, interpolation=cv2.INTER_CUBIC)
-    gt = cv2.resize(gt, dsize=dsize_cv2, interpolation=cv2.INTER_CUBIC)
+    # Setting labels
+    gt = np.zeros((dsize[0], dsize[1], len(alphabet)))
+    gt = gt.astype('uint8')
+    intensity = 1
+    for row in im_data.itertuples():
+        label = row.label
+        label_idx = alphabet[label]
+        p0 = row.x0, row.y0
+        p1 = row.x1, row.y1
+        p2 = row.x2, row.y2
+        p3 = row.x3, row.y3
+        pts = np.array([p0, p1, p2, p3], np.int32)
+        pts = list(get_xs(pts))
+        pts = np.array(pts, np.int32)
+        pts = [pts.reshape((-1, 1, 2))]
+        aux = np.zeros((im.shape[0], im.shape[1]))
+        cv2.fillPoly(aux, pts, color=intensity)
+        aux = cv2.resize(aux, dsize=dsize_cv2, interpolation=cv2.INTER_CUBIC)
+        gt[:, :, label_idx] = aux
     return im, gt
 
 
-def get_image_label_gen(folder, metadata, dsize, in_channels, out_channels):
-    set_size = metadata.shape[0]
+def get_image_label_gen(folder, metadata, dsize, in_channels, out_channels, params):
+    alphabet = params['alphabet']
+    image_name_list = metadata.image_name.unique()
+    set_size = len(image_name_list)
     x = np.zeros((set_size, dsize[0], dsize[1], in_channels))
     y = np.zeros((set_size, dsize[0], dsize[1], out_channels))
-    for row in metadata.itertuples():
-        idx = row.idx
-        im, gt = load_image(row, folder, dsize, in_channels)
+    for image_name in image_name_list:
+        image_data = metadata.loc[metadata.image_name == image_name]
+        idx = image_data.idx.values[0]
+        im, gt = load_image(image_data, folder, dsize, in_channels, alphabet)
         if in_channels == 3:
             x[idx, :, :, :] = im[:, :, 0:in_channels]
         else:
             x[idx, :, :, 0] = im[:, :]
-        y[idx, :, :, 0] = gt
-        y[idx, :, :, 1] = gt * -1.0 + 1.0
+        y[idx, :, :, :] = gt
     return x, y
 
 
@@ -95,9 +98,9 @@ def get_plates_text_metadata(params):
     labels = get_labels_plates_text(labels)
     labels = labels.assign(image_name=labels.filename)
     metadata = metadata.assign(image_name=metadata.image)
-    labels.image_name = labels.image_name.str.split('_').str[1]
     labels.image_name = labels.image_name.str.split('.').str[0]
-    metadata.image_name = metadata.image_name.str.split('_').str[1]
+    labels.image_name = labels.image_name.str.split('_').str[-1]
     metadata.image_name = metadata.image_name.str.split('.').str[0]
+    metadata.image_name = metadata.image_name.str.split('_').str[-1]
     metadata = metadata.merge(labels, on=['image_name'], how='left')
     return metadata

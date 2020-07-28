@@ -1,5 +1,6 @@
 import cv2
 import numpy as np
+import math
 from PIL import Image
 
 
@@ -51,11 +52,15 @@ def draw_lines(im, lines):
     return im
 
 
-def pred2im(im_set, dsize, image_idx):
-    im = np.zeros((dsize[0], dsize[1], 3))
-    im[:, :, 0] = im_set[image_idx, :, :, 0]
-    im[:, :, 1] = im_set[image_idx, :, :, 0]
-    im[:, :, 2] = im_set[image_idx, :, :, 0]
+def pred2im(im_set, dsize, image_idx, in_channels):
+    if in_channels == 3:
+        im = np.zeros((dsize[0], dsize[1], in_channels))
+        im[:, :, 0] = im_set[image_idx, :, :, 0]
+        im[:, :, 1] = im_set[image_idx, :, :, 0]
+        im[:, :, 2] = im_set[image_idx, :, :, 0]
+    else:
+        im = np.zeros((dsize[0], dsize[1], 1))
+        im[:, :, 0] = im_set[image_idx, :, :, 0]
     im = im.astype('uint8')
     return im
 
@@ -79,28 +84,13 @@ def get_min_area_rectangle(contours):
 
 
 def get_xs(rectangle):
-    c = np.median(rectangle, axis=0)
-    result = None
-    if rectangle is not None:
-        x01 = []
-        x23 = []
-        for point_idx in range(len(rectangle)):
-            point = rectangle[point_idx]
-            if point[0] < c[0]:
-                x01.append(point)
-            else:
-                x23.append(point)
-        a, b = x01
-        if a[1] > b[1]:
-            x0, x1 = a, b
-        else:
-            x0, x1 = b, a
-        a, b = x23
-        if a[1] > b[1]:
-            x3, x2 = a, b
-        else:
-            x3, x2 = b, a
-        result = x0, x1, x2, x3
+    result = list(rectangle)
+    # centroid
+    c = np.mean(rectangle, axis=0)
+    # sort by angle
+    result.sort(key=lambda p: math.atan2(p[1] - c[1], p[0] - c[0]))
+    x1, x2, x3, x0 = result
+    result = x0, x1, x2, x3
     return result
 
 
