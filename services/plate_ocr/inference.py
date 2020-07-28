@@ -1,5 +1,6 @@
 import cv2
 import numpy as np
+import pandas as pd
 from loguru import logger
 
 from cv.image_processing import (
@@ -24,15 +25,25 @@ def get_params():
     height = 50
     height, width = normalize_image_shape(height, width)
     dsize = (height, width)
-    alphabet = 'abcdefghijklmnopqrstuvwxyz0123456789'
+    alphabet = ' abcdefghijklmnopqrstuvwxyz0123456789'
+    alphabet = {char: idx for char, idx in zip(alphabet, range(len(alphabet)))}
     in_channels = 1
-    out_channels = len(alphabet)+1
+    out_channels = len(alphabet)
     params = {
         'input_folder': input_folder,
         'output_folder': output_folder,
         'dsize': dsize,
-        'model_file': f'{input_folder}/model/best_model.h5',
+        'model_folder': f'{output_folder}/model',
+        'model_file': f'{output_folder}/model/best_model.h5',
+        'labels': f"{input_folder}/labels_plates_ocr_1.json",
         'metadata': f"{input_folder}/files.csv",
+        'alphabet': alphabet,
+        'model_params': {
+            'img_height': dsize[0],
+            'img_width': dsize[1],
+            'in_channels': in_channels,
+            'out_channels': out_channels,
+        },
     }
     return params
 
@@ -43,7 +54,7 @@ def draw_rectangle(im, r):
     return im
 
 
-def segment_plates(params, logger):
+def ocr_plates(params, logger):
     model_file = params['model_file']
     input_folder = params['input_folder']
     dsize = params['dsize']
@@ -64,9 +75,14 @@ def segment_plates(params, logger):
     model.load_weights(model_file)
     logger.info("Loading data")
     metadata = get_plates_text_metadata(params)
-    metadata = metadata.assign(idx=range(len(metadata)))
+    metadata_idx = metadata.image_name.unique()
+    metadata_idx = pd.DataFrame(data={
+        'image_name': metadata_idx,
+        'idx': range(len(metadata_idx)),
+    })
+    metadata = metadata.merge(metadata_idx, on=['image_name'], how='left')
     images, _ = get_image_label_gen(input_folder, metadata, dsize,
-                                    in_channels, out_channels)
+                                    in_channels, out_channels, params)
     images = [pred2im(images, dsize, idx, in_channels) for idx in
               range(len(images))]
     logger.info("Pre process input")
@@ -74,10 +90,12 @@ def segment_plates(params, logger):
     logger.info("Inference")
     images_pred = [im.reshape(1, dsize[0], dsize[1], in_channels) for im in
                    images_pred]
-    images_pred = [(model.predict(im) * 255).round() for im in images_pred]
+    images_pred = [model.predict(im) for im in images_pred]
+    images_pred = [np.argmax(im, axis=3) for im in images_pred]
     images = [im.reshape(dsize[0], dsize[1], in_channels) for im in images]
-    images_pred = [pred2im(y, dsize, 0, in_channels) for y in images_pred]
+    images_pred = [(im*100).astype('uint8').reshape(dsize[0], dsize[1]) for im in images_pred]
     images_pred = [cv2.cvtColor(im, cv2.COLOR_GRAY2RGB) for im in images_pred]
+    print_named_images(images_pred, metadata, out_folder, "argmax", logger)
     logger.info("Getting contours")
     contours = [get_contours_rgb(im, min_area, max_area) for im in images_pred]
     logger.info("Draw contours")
@@ -107,4 +125,4 @@ def segment_plates(params, logger):
 
 
 if __name__ == "__main__":
-    segment_plates(get_params(), logger)
+    ocr_plates(get_params(), logger)

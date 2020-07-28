@@ -36,6 +36,10 @@ def load_image(im_data, folder, dsize, in_channels, alphabet):
         cv2.fillPoly(aux, pts, color=intensity)
         aux = cv2.resize(aux, dsize=dsize_cv2, interpolation=cv2.INTER_CUBIC)
         gt[:, :, label_idx] = aux
+    # Filling the zero class (non in the alphabet)
+    gt_zero = gt.max(axis=2)
+    gt_zero = (gt_zero == 0.0).astype(int)
+    gt[:, :, 0] = gt_zero
     return im, gt
 
 
