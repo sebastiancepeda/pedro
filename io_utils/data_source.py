@@ -20,27 +20,32 @@ def load_image(im_data, folder, dsize, in_channels, alphabet):
     # Setting labels
     gt = np.zeros((dsize[0], dsize[1], len(alphabet)))
     gt = gt.astype('uint8')
-    intensity = 1
+    im_shape = im.shape
     for row in im_data.itertuples():
-        label = row.label
-        label_idx = alphabet[label]
-        p0 = row.x0, row.y0
-        p1 = row.x1, row.y1
-        p2 = row.x2, row.y2
-        p3 = row.x3, row.y3
-        pts = np.array([p0, p1, p2, p3], np.int32)
-        pts = list(get_xs(pts))
-        pts = np.array(pts, np.int32)
-        pts = [pts.reshape((-1, 1, 2))]
-        aux = np.zeros((im.shape[0], im.shape[1]))
-        cv2.fillPoly(aux, pts, color=intensity)
-        aux = cv2.resize(aux, dsize=dsize_cv2, interpolation=cv2.INTER_CUBIC)
-        gt[:, :, label_idx] = aux
+        im_label, label_idx = get_labels(alphabet, dsize_cv2, im_shape, row)
+        gt[:, :, label_idx] = im_label
     # Filling the zero class (non in the alphabet)
     gt_zero = gt.max(axis=2)
     gt_zero = (gt_zero == 0.0).astype(int)
     gt[:, :, 0] = gt_zero
     return im, gt
+
+
+def get_labels(alphabet, dsize_cv2, im_shape, row):
+    label = row.label
+    label_idx = alphabet[label]
+    p0 = row.x0, row.y0
+    p1 = row.x1, row.y1
+    p2 = row.x2, row.y2
+    p3 = row.x3, row.y3
+    pts = np.array([p0, p1, p2, p3], np.int32)
+    pts = list(get_xs(pts))
+    pts = np.array(pts, np.int32)
+    pts = [pts.reshape((-1, 1, 2))]
+    im_label = np.zeros(im_shape)
+    cv2.fillPoly(im_label, pts, color=1)
+    im_label = cv2.resize(im_label, dsize=dsize_cv2, interpolation=cv2.INTER_CUBIC)
+    return im_label, label_idx
 
 
 def get_image_label_gen(folder, metadata, dsize, in_channels, out_channels, params):

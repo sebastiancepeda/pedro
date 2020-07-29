@@ -21,7 +21,7 @@ def get_params():
     params = {
         'input_folder': input_folder,
         'output_folder': output_folder,
-        'epochs': 1000,
+        'epochs': 10*1000,
         'dsize': dsize,
         'model_folder': f'{output_folder}/model',
         'model_file': f'{output_folder}/model/best_model.h5',

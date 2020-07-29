@@ -4,17 +4,13 @@ import pandas as pd
 from loguru import logger
 
 from cv.image_processing import (
-    get_contours_rgb,
-    print_named_images,
-    get_warping,
-    warp_image,
-    pred2im,
-    get_min_area_rectangle,
+    get_contours_rgb, print_named_images, get_warping,
+    warp_image, pred2im, get_min_area_rectangle,
 )
-from cv.tensorflow_models.unet_little import get_model_definition, \
-    normalize_image_shape
-from io_utils.data_source import (get_image_label_gen,
-                                  get_plates_text_metadata)
+from cv.tensorflow_models.unet_little import (
+    get_model_definition, normalize_image_shape)
+from io_utils.data_source import (
+    get_image_label_gen, get_plates_text_metadata)
 
 
 def get_params():
@@ -66,7 +62,7 @@ def ocr_plates(params, logger):
     color = (255, 0, 0)
     min_area = 10 * 40
     max_area = 100 * 200
-    thickness = 3
+    thick = 3
     debug_level = 0
     #
     logger.info("Loading model")
@@ -83,8 +79,7 @@ def ocr_plates(params, logger):
     metadata = metadata.merge(metadata_idx, on=['image_name'], how='left')
     images, _ = get_image_label_gen(input_folder, metadata, dsize,
                                     in_channels, out_channels, params)
-    images = [pred2im(images, dsize, idx, in_channels) for idx in
-              range(len(images))]
+    images = [pred2im(images, dsize, idx, in_channels) for idx in range(len(images))]
     logger.info("Pre process input")
     images_pred = [preprocess_input(im) for im in images]
     logger.info("Inference")
@@ -93,33 +88,30 @@ def ocr_plates(params, logger):
     images_pred = [model.predict(im) for im in images_pred]
     images_pred = [np.argmax(im, axis=3) for im in images_pred]
     images = [im.reshape(dsize[0], dsize[1], in_channels) for im in images]
-    images_pred = [(im*100).astype('uint8').reshape(dsize[0], dsize[1]) for im in images_pred]
+    images_pred = [(im * 100).astype('uint8').reshape(dsize[0], dsize[1]) for
+                   im in images_pred]
+    im_pred_b = [((im > 0) * 255).astype('uint8') for im in images_pred]
+    im_pred_b = [cv2.cvtColor(im, cv2.COLOR_GRAY2RGB) for im in im_pred_b]
+    print_named_images(im_pred_b, metadata, out_folder, "binary", logger)
     images_pred = [cv2.cvtColor(im, cv2.COLOR_GRAY2RGB) for im in images_pred]
     print_named_images(images_pred, metadata, out_folder, "argmax", logger)
     logger.info("Getting contours")
-    contours = [get_contours_rgb(im, min_area, max_area) for im in images_pred]
+    contours = [get_contours_rgb(im, min_area, max_area) for im in im_pred_b]
     logger.info("Draw contours")
     images_pred = [cv2.drawContours(
-        im, c, -1, color, thickness, 8
-    ) for im, c in zip(images_pred, contours)]
-    logger.info("Straight bounding boxes")
-    bounding_boxes = [cv2.boundingRect(c[0]) for c in contours]
-    images_pred = [draw_rectangle(im, b) for im, b in
-                   zip(images_pred, bounding_boxes)]
+        im, c, -1, color, thick, 8) for im, c in zip(images_pred, contours)]
     logger.info("Min area bounding boxes")
-    bounding_boxes = [get_min_area_rectangle(c) for c in contours]
-    if debug_level > 0:
-        images_pred = [cv2.drawContours(im, [r], 0, color, thickness) for im, r
-                       in zip(images_pred, bounding_boxes)]
-        print_named_images(images_pred, metadata, out_folder,
-                           "min_area_bounding_boxes", logger)
+    boxes = [get_min_area_rectangle(c) for c in contours]
+    im_boxes = [cv2.drawContours(im[:,:,0], [r], 0, color, thick) for im, r in
+                   zip(images, boxes)]
+    print_named_images(im_boxes, metadata, out_folder, "boxes", logger)
     logger.info("Warp images")
-    warpings = [get_warping(q, dsize_cv2) for q in bounding_boxes]
+    warpings = [get_warping(q, dsize_cv2) for q in boxes]
     images_pred = [warp_image(im, w, dsize_cv2) for (im, w) in
                    zip(images, warpings)]
     print_named_images(images_pred, metadata, out_folder, "plates", logger)
-    debug_images = [np.concatenate((im[:, :, 0], pred), axis=1) for
-                    im, pred in zip(images, images_pred)]
+    debug_images = [np.concatenate((im[:, :, 0], im2[:,:,0]), axis=1) for im, im2 in
+                    zip(images, im_pred_b)]
     print_named_images(debug_images, metadata, out_folder, "model_output",
                        logger)
 
