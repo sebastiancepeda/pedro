@@ -88,32 +88,14 @@ def ocr_plates(params, logger):
     images_pred = [model.predict(im) for im in images_pred]
     images_pred = [np.argmax(im, axis=3) for im in images_pred]
     images = [im.reshape(dsize[0], dsize[1], in_channels) for im in images]
-    images_pred = [(im * 100).astype('uint8').reshape(dsize[0], dsize[1]) for
-                   im in images_pred]
-    im_pred_b = [((im > 0) * 255).astype('uint8') for im in images_pred]
-    im_pred_b = [cv2.cvtColor(im, cv2.COLOR_GRAY2RGB) for im in im_pred_b]
-    print_named_images(im_pred_b, metadata, out_folder, "binary", logger)
-    images_pred = [cv2.cvtColor(im, cv2.COLOR_GRAY2RGB) for im in images_pred]
-    print_named_images(images_pred, metadata, out_folder, "argmax", logger)
-    logger.info("Getting contours")
-    contours = [get_contours_rgb(im, min_area, max_area) for im in im_pred_b]
-    logger.info("Draw contours")
-    images_pred = [cv2.drawContours(
-        im, c, -1, color, thick, 8) for im, c in zip(images_pred, contours)]
-    logger.info("Min area bounding boxes")
-    boxes = [get_min_area_rectangle(c) for c in contours]
-    im_boxes = [cv2.drawContours(im[:,:,0], [r], 0, color, thick) for im, r in
-                   zip(images, boxes)]
-    print_named_images(im_boxes, metadata, out_folder, "boxes", logger)
-    logger.info("Warp images")
-    warpings = [get_warping(q, dsize_cv2) for q in boxes]
-    images_pred = [warp_image(im, w, dsize_cv2) for (im, w) in
-                   zip(images, warpings)]
-    print_named_images(images_pred, metadata, out_folder, "plates", logger)
-    debug_images = [np.concatenate((im[:, :, 0], im2[:,:,0]), axis=0) for im, im2 in
-                    zip(images, im_pred_b)]
-    print_named_images(debug_images, metadata, out_folder, "model_output",
-                       logger)
+    alphabet = params['alphabet']
+    idx2char = {alphabet[char]: char for char in alphabet.keys()}
+    texts = []
+    for y, im_name in zip(images_pred, metadata.image_name):
+        y = y.flatten().tolist()
+        text = [idx2char[idx] for idx in y]
+        logger.info(f"Text {im_name}: {text}")
+        texts.append(text)
 
 
 if __name__ == "__main__":
