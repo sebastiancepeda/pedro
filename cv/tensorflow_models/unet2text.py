@@ -79,17 +79,17 @@ def get_model_definition(img_height, img_width, in_channels, out_channels):
         'kernel_initializer': 'he_normal',
         'padding': 'same',
     }
-    x = Conv2D(100, kernel_size=(5, 5), **kwargs_conv2d)(u1)
+    x = Conv2D(100, kernel_size=(3, 3), **kwargs_conv2d)(u1)
     x = MaxPooling2D((2, 2))(x)
-    x = Conv2D(100, kernel_size=(5, 5), **kwargs_conv2d)(x)
+    x = Conv2D(100, kernel_size=(3, 3), **kwargs_conv2d)(x)
     x = MaxPooling2D((2, 2))(x)
-    x = Conv2D(100, kernel_size=(5, 5), **kwargs_conv2d)(x)
+    x = Conv2D(100, kernel_size=(3, 3), **kwargs_conv2d)(x)
     x = MaxPooling2D((2, 2))(x)
-    x = Conv2D(100, kernel_size=(5, 5), **kwargs_conv2d)(x)
+    x = Conv2D(100, kernel_size=(3, 3), **kwargs_conv2d)(x)
     x = MaxPooling2D((2, 2))(x)
-    x = Conv2D(100, kernel_size=(3, 10), **kwargs_conv2d)(x)
+    x = Conv2D(100, kernel_size=(3, 3), **kwargs_conv2d)(x)
     x = MaxPooling2D((4, 1))(x)
-    x = Conv2D(100, kernel_size=(1, 10), **kwargs_conv2d)(x)
+    x = Conv2D(100, kernel_size=(1, 3), **kwargs_conv2d)(x)
     outputs = Conv2D(out_channels, (1, 1), activation='sigmoid')(x)
     # Model compilation
     model = Model(inputs=[inputs], outputs=[outputs])
