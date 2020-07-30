@@ -91,11 +91,12 @@ def ocr_plates(params, logger):
     alphabet = params['alphabet']
     idx2char = {alphabet[char]: char for char in alphabet.keys()}
     texts = []
-    for y, im_name in zip(images_pred, metadata.image_name):
+    for y, im_name, text in zip(images_pred, metadata.image_name, metadata.text):
         y = y.flatten().tolist()
-        text = [idx2char[idx] for idx in y]
-        logger.info(f"Text {im_name}: {text}")
-        texts.append(text)
+        text_pred = [idx2char[idx] for idx in y]
+        text_pred = ''.join(text_pred)
+        logger.info(f"Text {im_name: <7}: {text_pred} - {text}")
+        texts.append(text_pred)
 
 
 if __name__ == "__main__":
