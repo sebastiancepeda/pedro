@@ -17,7 +17,7 @@ def train_model(x_train, y_train, x_val, y_val, get_model_definition, params,
         keras.callbacks.ModelCheckpoint(
             model_file,
             save_weights_only=True,
-            save_best_only=True,
+            save_best_only=False,#True,
             mode='min'),
     ]
     if not os.path.exists(model_folder):
