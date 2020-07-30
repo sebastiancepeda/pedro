@@ -7,10 +7,10 @@ from cv.image_processing import (
     get_contours_rgb, print_named_images, get_warping,
     warp_image, pred2im, get_min_area_rectangle,
 )
-from cv.tensorflow_models.unet_little import (
+from cv.tensorflow_models.unet2text import (
     get_model_definition, normalize_image_shape)
 from io_utils.data_source import (
-    get_image_label_gen, get_plates_text_metadata)
+    get_image_text_label_gen, get_plates_text_metadata)
 
 
 def get_params():
@@ -77,7 +77,7 @@ def ocr_plates(params, logger):
         'idx': range(len(metadata_idx)),
     })
     metadata = metadata.merge(metadata_idx, on=['image_name'], how='left')
-    images, _ = get_image_label_gen(input_folder, metadata, dsize,
+    images, _ = get_image_text_label_gen(input_folder, metadata, dsize,
                                     in_channels, out_channels, params)
     images = [pred2im(images, dsize, idx, in_channels) for idx in range(len(images))]
     logger.info("Pre process input")
@@ -110,7 +110,7 @@ def ocr_plates(params, logger):
     images_pred = [warp_image(im, w, dsize_cv2) for (im, w) in
                    zip(images, warpings)]
     print_named_images(images_pred, metadata, out_folder, "plates", logger)
-    debug_images = [np.concatenate((im[:, :, 0], im2[:,:,0]), axis=1) for im, im2 in
+    debug_images = [np.concatenate((im[:, :, 0], im2[:,:,0]), axis=0) for im, im2 in
                     zip(images, im_pred_b)]
     print_named_images(debug_images, metadata, out_folder, "model_output",
                        logger)

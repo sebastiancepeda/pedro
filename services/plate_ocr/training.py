@@ -2,8 +2,8 @@ from loguru import logger
 import pandas as pd
 
 from cv.tensorflow_models.tensorflow_utils import train_model
-from cv.tensorflow_models.unet_little import get_model_definition, normalize_image_shape
-from io_utils.data_source import get_image_label_gen, get_plates_text_metadata
+from cv.tensorflow_models.unet2text import get_model_definition, normalize_image_shape
+from io_utils.data_source import get_image_text_label_gen, get_plates_text_metadata
 
 
 def get_params():
@@ -44,23 +44,23 @@ def train_ocr_model(params):
     out_channels = params['model_params']['out_channels']
     input_folder = params['input_folder']
     metadata = get_plates_text_metadata(params)
-    train_metadata = metadata.query("set == 'train'")
-    test_metadata = metadata.query("set == 'test'")
-    train_image_idx = train_metadata.image_name.unique()
-    test_image_idx = test_metadata.image_name.unique()
-    train_image_idx = pd.DataFrame(data={
-        'image_name': train_image_idx,
-        'idx': range(len(train_image_idx)),
+    train_meta = metadata.query("set == 'train'")
+    test_meta = metadata.query("set == 'test'")
+    train_im_idx = train_meta.image_name.unique()
+    test_im_idx = test_meta.image_name.unique()
+    train_im_idx = pd.DataFrame(data={
+        'image_name': train_im_idx,
+        'idx': range(len(train_im_idx)),
     })
-    test_image_idx = pd.DataFrame(data={
-        'image_name': test_image_idx,
-        'idx': range(len(test_image_idx)),
+    test_im_idx = pd.DataFrame(data={
+        'image_name': test_im_idx,
+        'idx': range(len(test_im_idx)),
     })
-    train_metadata = train_metadata.merge(train_image_idx, on=['image_name'], how='left')
-    test_metadata = test_metadata.merge(test_image_idx, on=['image_name'], how='left')
-    x_train, y_train = get_image_label_gen(input_folder, train_metadata, dsize,
+    train_meta = train_meta.merge(train_im_idx, on=['image_name'], how='left')
+    test_meta = test_meta.merge(test_im_idx, on=['image_name'], how='left')
+    x_train, y_train = get_image_text_label_gen(input_folder, train_meta, dsize,
                                            in_channels, out_channels, params)
-    x_val, y_val = get_image_label_gen(input_folder, test_metadata, dsize,
+    x_val, y_val = get_image_text_label_gen(input_folder, test_meta, dsize,
                                        in_channels, out_channels, params)
     train_model(x_train, y_train, x_val, y_val, get_model_definition, params,
                 logger)

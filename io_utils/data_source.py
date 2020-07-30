@@ -6,7 +6,20 @@ from cv.image_processing import get_xs
 from io_utils.read_polygons_json import get_labels_plates_text
 
 
-def load_image(im_data, folder, dsize, in_channels, alphabet):
+def load_image(im_data, folder, dsize, in_channels):
+    dsize_cv2 = (dsize[1], dsize[0])
+    image = im_data.image
+    im_file = f"{folder}/{image}"
+    im = cv2.imread(im_file)
+    assert im is not None, f"Error while reading image: {im_file}"
+    im = cv2.cvtColor(im, cv2.COLOR_BGR2GRAY)
+    if in_channels == 3:
+        im = cv2.cvtColor(im, cv2.COLOR_GRAY2RGB)
+    im = cv2.resize(im, dsize=dsize_cv2, interpolation=cv2.INTER_CUBIC)
+    return im
+
+
+def load_image_label(im_data, folder, dsize, in_channels, alphabet):
     dsize_cv2 = (dsize[1], dsize[0])
     image = im_data.image.values[0]
     # Image load
@@ -57,12 +70,35 @@ def get_image_label_gen(folder, metadata, dsize, in_channels, out_channels, para
     for image_name in image_name_list:
         image_data = metadata.loc[metadata.image_name == image_name]
         idx = image_data.idx.values[0]
-        im, gt = load_image(image_data, folder, dsize, in_channels, alphabet)
+        im, gt = load_image_label(image_data, folder, dsize, in_channels, alphabet)
         if in_channels == 3:
             x[idx, :, :, :] = im[:, :, 0:in_channels]
         else:
             x[idx, :, :, 0] = im[:, :]
         y[idx, :, :, :] = gt
+    return x, y
+
+
+def get_image_text_label_gen(folder, metadata, dsize, in_channels, out_channels, params):
+    alphabet = params['alphabet']
+    image_name_list = metadata.image_name.unique()
+    set_size = len(image_name_list)
+    text_max_len = 13
+    x = np.zeros((set_size, dsize[0], dsize[1], in_channels))
+    y = np.zeros((set_size, 1, text_max_len, out_channels))
+    for row in metadata.itertuples():
+        plate_text = row.text
+        plate_text = f"{plate_text: <{text_max_len}}"
+        idx = row.idx
+        for idx_letter in range(text_max_len):
+            label = plate_text[idx_letter]
+            label_idx = alphabet[label]
+            y[idx, 0, idx_letter, label_idx] = 1.0
+        im = load_image(row, folder, dsize, in_channels)
+        if in_channels == 3:
+            x[idx, :, :, :] = im[:, :, 0:in_channels]
+        else:
+            x[idx, :, :, 0] = im[:, :]
     return x, y
 
 
@@ -100,7 +136,7 @@ def get_plates_bounding_metadata(params):
     return metadata
 
 
-def get_plates_text_metadata(params):
+def get_plates_text_area_metadata(params):
     metadata = params['metadata']
     labels = params['labels']
     metadata = pd.read_csv(metadata)
@@ -112,4 +148,13 @@ def get_plates_text_metadata(params):
     metadata.image_name = metadata.image_name.str.split('.').str[0]
     metadata.image_name = metadata.image_name.str.split('_').str[-1]
     metadata = metadata.merge(labels, on=['image_name'], how='left')
+    return metadata
+
+
+def get_plates_text_metadata(params):
+    metadata = params['metadata']
+    metadata = pd.read_csv(metadata)
+    metadata = metadata.assign(image_name=metadata.image)
+    metadata.image_name = metadata.image_name.str.split('.').str[0]
+    metadata.image_name = metadata.image_name.str.split('_').str[-1]
     return metadata
