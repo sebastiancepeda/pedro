@@ -33,13 +33,14 @@ def load_image_label(im_data, folder, dsize, in_channels, alphabet):
     # Setting labels
     gt = np.zeros((dsize[0], dsize[1], len(alphabet)))
     gt = gt.astype('uint8')
-    im_shape = im.shape
+    im_shape = (im.shape[0], im.shape[1])
     for row in im_data.itertuples():
         im_label, label_idx = get_labels(alphabet, dsize_cv2, im_shape, row)
         gt[:, :, label_idx] = im_label
     # Filling the zero class (non in the alphabet)
     gt_zero = gt.max(axis=2)
     gt_zero = (gt_zero == 0.0).astype(int)
+    # a = gt_zero.min(), gt_zero.max()
     gt[:, :, 0] = gt_zero
     return im, gt
 
