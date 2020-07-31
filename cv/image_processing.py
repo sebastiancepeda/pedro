@@ -59,8 +59,8 @@ def pred2im(im_set, dsize, image_idx, in_channels):
         im[:, :, 1] = im_set[image_idx, :, :, 0]
         im[:, :, 2] = im_set[image_idx, :, :, 0]
     else:
-        im = np.zeros((dsize[0], dsize[1], 1))
-        im[:, :, 0] = im_set[image_idx, :, :, 0]
+        im = np.zeros((dsize[0], dsize[1]))
+        im[:, :] = im_set[image_idx, :, :, 0]
     im = im.astype('uint8')
     return im
 
@@ -76,10 +76,12 @@ def image_set2list(y_train_pred, y_val_pred):
 
 
 def get_min_area_rectangle(contours):
-    contour = contours[0]
-    rectangle = cv2.minAreaRect(contour)
-    rectangle = cv2.boxPoints(rectangle)
-    rectangle = np.int0(rectangle)
+    rectangle = None
+    if len(contours) > 0:
+        contour = contours[0]
+        rectangle = cv2.minAreaRect(contour)
+        rectangle = cv2.boxPoints(rectangle)
+        rectangle = np.int0(rectangle)
     return rectangle
 
 

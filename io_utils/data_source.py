@@ -27,13 +27,13 @@ def load_image_label(im_data, folder, dsize, in_channels, alphabet):
     im = cv2.imread(im_file)
     assert im is not None, f"Error while reading image: {im_file}"
     im = cv2.cvtColor(im, cv2.COLOR_BGR2GRAY)
+    im_shape = (im.shape[0], im.shape[1])
     if in_channels == 3:
         im = cv2.cvtColor(im, cv2.COLOR_GRAY2RGB)
     im = cv2.resize(im, dsize=dsize_cv2, interpolation=cv2.INTER_CUBIC)
     # Setting labels
     gt = np.zeros((dsize[0], dsize[1], len(alphabet)))
     gt = gt.astype('uint8')
-    im_shape = (im.shape[0], im.shape[1])
     for row in im_data.itertuples():
         im_label, label_idx = get_labels(alphabet, dsize_cv2, im_shape, row)
         gt[:, :, label_idx] = im_label
@@ -57,8 +57,10 @@ def get_labels(alphabet, dsize_cv2, im_shape, row):
     pts = np.array(pts, np.int32)
     pts = [pts.reshape((-1, 1, 2))]
     im_label = np.zeros(im_shape)
+    # a = im_label.mean()
     cv2.fillPoly(im_label, pts, color=1)
     im_label = cv2.resize(im_label, dsize=dsize_cv2, interpolation=cv2.INTER_CUBIC)
+    # c = im_label.mean()
     return im_label, label_idx
 
 
@@ -138,18 +140,24 @@ def get_plates_bounding_metadata(params):
 
 
 def get_plates_text_area_metadata(params):
-    metadata = params['metadata']
+    meta = params['metadata']
     labels = params['labels']
-    metadata = pd.read_csv(metadata)
+    meta = pd.read_csv(meta)
     labels = get_labels_plates_text(labels)
     labels = labels.assign(image_name=labels.filename)
-    metadata = metadata.assign(image_name=metadata.image)
+    meta = meta.assign(image_name=meta.image)
     labels.image_name = labels.image_name.str.split('.').str[0]
     labels.image_name = labels.image_name.str.split('_').str[-1]
-    metadata.image_name = metadata.image_name.str.split('.').str[0]
-    metadata.image_name = metadata.image_name.str.split('_').str[-1]
-    metadata = metadata.merge(labels, on=['image_name'], how='left')
-    return metadata
+    meta.image_name = meta.image_name.str.split('.').str[0]
+    meta.image_name = meta.image_name.str.split('_').str[-1]
+    meta = meta.merge(labels, on=['image_name'], how='left')
+    meta_im_idx = meta.image_name.unique()
+    meta_im_idx = pd.DataFrame(data={
+        'image_name': meta_im_idx,
+        'idx': range(len(meta_im_idx)),
+    })
+    meta = meta.merge(meta_im_idx, on=['image_name'], how='left')
+    return meta
 
 
 def get_plates_text_metadata(params):
