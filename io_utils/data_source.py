@@ -151,12 +151,6 @@ def get_plates_text_area_metadata(params):
     meta.image_name = meta.image_name.str.split('.').str[0]
     meta.image_name = meta.image_name.str.split('_').str[-1]
     meta = meta.merge(labels, on=['image_name'], how='left')
-    meta_im_idx = meta.image_name.unique()
-    meta_im_idx = pd.DataFrame(data={
-        'image_name': meta_im_idx,
-        'idx': range(len(meta_im_idx)),
-    })
-    meta = meta.merge(meta_im_idx, on=['image_name'], how='left')
     return meta
 
 

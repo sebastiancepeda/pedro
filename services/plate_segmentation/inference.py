@@ -74,6 +74,12 @@ def segment_plates(params, logger):
     model.load_weights(model_file)
     logger.info("Loading data")
     meta = get_plates_text_area_metadata(params)
+    meta_im_idx = meta.image_name.unique()
+    meta_im_idx = pd.DataFrame(data={
+        'image_name': meta_im_idx,
+        'idx': range(len(meta_im_idx)),
+    })
+    meta = meta.merge(meta_im_idx, on=['image_name'], how='left')
     images, im_labels = get_image_label_gen(input_folder, meta, dsize, in_channels, out_channels, params)
     im_labels = [pred2im(im_labels*255, dsize, idx, 1) for idx in range(len(im_labels))]
     print_named_images(im_labels, meta, output_folder, "im_labels", logger)
