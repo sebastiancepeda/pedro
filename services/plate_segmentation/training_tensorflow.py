@@ -12,7 +12,8 @@ def get_params():
     path = '/home/sebastian/projects/pedro/data'
     input_folder = f'{path}/plates/input'
     output_folder = f'{path}/plates/output_plate_segmentation'
-    dsize = (576, 576)
+    #dsize = (576, 576)
+    dsize = (256, 256)
     # alphabet = '0p'
     alphabet = [' ', 'plate']
     alphabet = {char: idx for char, idx in zip(alphabet, range(len(alphabet)))}

@@ -34,12 +34,13 @@ def get_model_definition(img_height, img_width, in_channels, out_channels):
         'kernel_initializer': 'he_normal',
         'padding': 'same',
     }
+    h_dim = 30
     outs = {
-        1: 100,  # 64
-        2: 100,
-        3: 100,
-        4: 100,
-        5: 100,
+        1: h_dim,  # 64
+        2: h_dim,
+        3: h_dim,
+        4: h_dim,
+        5: h_dim,
     }
     # Down
     c1 = Conv2D(outs[1], **kwargs_conv2d)(pre_processing)

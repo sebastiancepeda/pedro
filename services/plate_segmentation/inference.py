@@ -1,5 +1,3 @@
-import pathlib
-
 import cv2
 import pandas as pd
 from loguru import logger
@@ -12,16 +10,17 @@ from cv.image_processing import (
     pred2im,
     get_min_area_rectangle,
 )
-# from cv.seg_models.model_definition import get_model_definition
 from cv.tensorflow_models.unet_little import get_model_definition
-from io_utils.data_source import (get_image_label_gen, load_label_data, get_plates_text_area_metadata)
+from io_utils.data_source import (
+    get_image_label_gen, get_plates_text_area_metadata)
 
 
 def get_params():
     path = '/home/sebastian/projects/pedro/data'
     input_folder = f'{path}/plates/input'
     output_folder = f'{path}/plates/output_plate_segmentation'
-    dsize = (576, 576)
+    # dsize = (576, 576)
+    dsize = (256, 256)
     # alphabet = '0p'
     alphabet = [' ', 'plate']
     alphabet = {char: idx for char, idx in zip(alphabet, range(len(alphabet)))}
@@ -82,7 +81,7 @@ def segment_plates(params, logger):
     meta = meta.merge(meta_im_idx, on=['image_name'], how='left')
     images, im_labels = get_image_label_gen(input_folder, meta, dsize, in_channels, out_channels, params)
     im_labels = [pred2im(im_labels*255, dsize, idx, 1) for idx in range(len(im_labels))]
-    print_named_images(im_labels, meta, output_folder, "im_labels", logger)
+    # print_named_images(im_labels, meta, output_folder, "im_labels", logger)
     images = [pred2im(images, dsize, idx, in_channels) for idx in range(len(images))]
     logger.info("Pre process input")
     ims_pred = [preprocess_input(im) for im in images]
@@ -91,7 +90,7 @@ def segment_plates(params, logger):
     ims_pred = [(model.predict(im) * 255).round() for im in ims_pred]
     images = [im.reshape(dsize[0], dsize[0], 3) for im in images]
     ims_pred = [pred2im(y, dsize, 0, 3) for y in ims_pred]
-    print_named_images(ims_pred, meta, output_folder, "im_pred", logger)
+    # print_named_images(ims_pred, meta, output_folder, "im_pred", logger)
     logger.info("Getting contours")
     contours = [get_contours_rgb(im, min_area, max_area) for im in ims_pred]
     logger.info("Draw contours")
