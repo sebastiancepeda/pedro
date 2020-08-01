@@ -36,11 +36,11 @@ def get_model_definition(img_height, img_width, in_channels, out_channels):
     }
     h_dim = 5
     outs = {
-        1: h_dim,  # 64
-        2: h_dim,
-        3: h_dim,
-        4: h_dim,
-        5: h_dim,
+        1: 50,  # 64
+        2: 25,
+        3: 15,
+        4: 10,
+        5: 5,
     }
     # Down
     c1 = Conv2D(outs[1], **kwargs_conv2d)(pre_processing)

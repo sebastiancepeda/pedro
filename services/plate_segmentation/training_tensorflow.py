@@ -5,7 +5,7 @@ import pandas as pd
 
 from cv.tensorflow_models.unet_little import get_model_definition
 from cv.tensorflow_models.tensorflow_utils import train_model
-from io_utils.data_source import get_image_label_gen, get_plates_text_metadata, get_plates_text_area_metadata
+from io_utils.data_source import get_image_label, get_plates_text_metadata, get_plates_text_area_metadata
 
 
 def get_params():
@@ -59,8 +59,8 @@ def train_plate_segmentation(params):
     })
     train_meta = train_meta.merge(train_im_idx, on=['image_name'], how='left')
     test_meta = test_meta.merge(test_im_idx, on=['image_name'], how='left')
-    x_train, y_train = get_image_label_gen(input_folder, train_meta, dsize, in_channels, out_channels, params)
-    x_val, y_val = get_image_label_gen(input_folder, test_meta, dsize, in_channels, out_channels, params)
+    x_train, y_train = get_image_label(input_folder, train_meta, dsize, in_channels, out_channels, params)
+    x_val, y_val = get_image_label(input_folder, test_meta, dsize, in_channels, out_channels, params)
     train_model(x_train, y_train, x_val, y_val, get_model_definition, params, logger)
 
 

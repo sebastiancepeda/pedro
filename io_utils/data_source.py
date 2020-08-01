@@ -64,7 +64,7 @@ def get_labels(alphabet, dsize_cv2, im_shape, row):
     return im_label, label_idx
 
 
-def get_image_label_gen(folder, metadata, dsize, in_channels, out_channels, params):
+def get_image_label(folder, metadata, dsize, in_channels, out_channels, params):
     alphabet = params['alphabet']
     image_name_list = metadata.image_name.unique()
     set_size = len(image_name_list)

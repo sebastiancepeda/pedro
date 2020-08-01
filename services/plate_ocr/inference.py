@@ -4,7 +4,7 @@ import pandas as pd
 from loguru import logger
 
 from cv.image_processing import (
-    get_contours_rgb, print_named_images, get_warping,
+    get_contours_rgb, print_images, get_warping,
     warp_image, pred2im, get_min_area_rectangle,
 )
 from cv.tensorflow_models.unet2text import (

@@ -4,7 +4,7 @@ from loguru import logger
 
 from cv.image_processing import (
     get_contours_rgb,
-    print_named_images,
+    print_images,
     get_warping,
     warp_image,
     pred2im,
@@ -12,7 +12,7 @@ from cv.image_processing import (
 )
 from cv.tensorflow_models.unet_little import get_model_definition, \
     normalize_image_shape
-from io_utils.data_source import (get_image_label_gen,
+from io_utils.data_source import (get_image_label,
                                   get_plates_text_metadata)
 
 
@@ -71,8 +71,8 @@ def segment_plates(params, logger):
     logger.info("Loading data")
     metadata = get_plates_text_metadata(params)
     metadata = metadata.assign(idx=range(len(metadata)))
-    images, _ = get_image_label_gen(input_folder, metadata, dsize,
-                                    in_channels, out_channels)
+    images, _ = get_image_label(input_folder, metadata, dsize,
+                                in_channels, out_channels)
     images = [pred2im(images, dsize, idx, in_channels) for idx in
               range(len(images))]
     logger.info("Pre process input")
@@ -99,17 +99,17 @@ def segment_plates(params, logger):
     if debug_level > 0:
         images_pred = [cv2.drawContours(im, [r], 0, color, thickness) for im, r
                        in zip(images_pred, bounding_boxes)]
-        print_named_images(images_pred, metadata, out_folder,
+        print_images(images_pred, metadata, out_folder,
                            "min_area_bounding_boxes", logger)
     logger.info("Warp images")
     warpings = [get_warping(q, dsize_cv2) for q in bounding_boxes]
     images_pred = [warp_image(im, w, dsize_cv2) for (im, w) in
                    zip(images, warpings)]
-    print_named_images(images_pred, metadata, out_folder, "plates", logger)
+    print_images(images_pred, metadata, out_folder, "plates", logger)
     debug_images = [np.concatenate((im[:, :, 0], pred), axis=1) for
                     im, pred in zip(images, images_pred)]
-    print_named_images(debug_images, metadata, out_folder, "model_output",
-                       logger)
+    print_images(debug_images, metadata, out_folder, "model_output",
+                 logger)
 
 
 if __name__ == "__main__":

@@ -2,7 +2,7 @@ from loguru import logger
 
 from cv.tensorflow_models.tensorflow_utils import train_model
 from cv.tensorflow_models.unet_little import get_model_definition, normalize_image_shape
-from io_utils.data_source import get_image_label_gen, get_plates_text_metadata
+from io_utils.data_source import get_image_label, get_plates_text_metadata
 
 
 def get_params():
@@ -42,10 +42,10 @@ def train_ocr_model(params):
     test_metadata = metadata.query("set == 'test'")
     train_metadata = train_metadata.assign(idx=range(len(train_metadata)))
     test_metadata = test_metadata.assign(idx=range(len(test_metadata)))
-    x_train, y_train = get_image_label_gen(folder, train_metadata, dsize,
-                                           in_channels, out_channels)
-    x_val, y_val = get_image_label_gen(folder, test_metadata, dsize,
+    x_train, y_train = get_image_label(folder, train_metadata, dsize,
                                        in_channels, out_channels)
+    x_val, y_val = get_image_label(folder, test_metadata, dsize,
+                                   in_channels, out_channels)
     train_model(x_train, y_train, x_val, y_val, get_model_definition, params,
                 logger)
 

@@ -170,7 +170,7 @@ def get_theta(x0, x3):
     return theta
 
 
-def print_named_images(images, metadata, folder, name, logger):
+def print_images(images, metadata, folder, name, logger):
     logger.info(f"Saving {name} images")
     for image_filename, im in zip(metadata.image, images):
         image_name = image_filename.split('.')[0]
