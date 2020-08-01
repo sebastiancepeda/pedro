@@ -6,6 +6,7 @@ from loguru import logger
 from cv.pytorch.pytorch_utils import train_model
 from cv.pytorch.unet_small import UNetSmall
 from io_utils.data_source import get_image_label, get_plates_bounding_metadata
+from io_utils.utils import set_index
 
 
 def get_params():
@@ -33,12 +34,12 @@ def train_plate_segmentation(params):
     dsize = params['dsize']
     folder = params['folder']
     metadata = get_plates_bounding_metadata(params)
-    train_metadata = metadata.query("set == 'train'")
-    test_metadata = metadata.query("set == 'test'")
-    train_metadata = train_metadata.assign(idx=range(len(train_metadata)))
-    test_metadata = test_metadata.assign(idx=range(len(test_metadata)))
-    x_train, y_train = get_image_label(folder, train_metadata, dsize)
-    x_val, y_val = get_image_label(folder, test_metadata, dsize)
+    train_meta = metadata.query("set == 'train'")
+    test_meta = metadata.query("set == 'test'")
+    train_meta = set_index(train_meta)
+    test_meta = set_index(test_meta)
+    x_train, y_train = get_image_label(folder, train_meta, dsize)
+    x_val, y_val = get_image_label(folder, test_meta, dsize)
     x_train = x_train.astype(np.float32)
     y_train = y_train.astype(np.float32)
     x_val = x_val.astype(np.float32)

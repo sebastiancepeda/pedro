@@ -5,6 +5,7 @@ from loguru import logger
 from cv.tensorflow_models.tensorflow_utils import train_model
 from io_utils.data_source import get_image_label, get_plates_bounding_metadata
 from cv.seg_models.model_definition import get_model_definition
+from io_utils.utils import set_index
 
 
 def get_params():
@@ -30,8 +31,8 @@ def train_plate_segmentation(params):
     metadata = get_plates_bounding_metadata(params)
     train_metadata = metadata.query("set == 'train'")
     test_metadata = metadata.query("set == 'test'")
-    train_metadata = train_metadata.assign(idx=range(len(train_metadata)))
-    test_metadata = test_metadata.assign(idx=range(len(test_metadata)))
+    train_metadata = set_index(train_metadata)
+    test_metadata = set_index(test_metadata)
     x_train, y_train = get_image_label(folder, train_metadata, dsize)
     x_val, y_val = get_image_label(folder, test_metadata, dsize)
     train_model(x_train, y_train, x_val, y_val, get_model_definition, params, logger)

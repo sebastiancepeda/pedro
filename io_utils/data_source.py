@@ -82,7 +82,7 @@ def get_image_label(folder, metadata, dsize, in_channels, out_channels, params):
     return x, y
 
 
-def get_image_text_label_gen(folder, metadata, dsize, in_channels, out_channels, params):
+def get_image_text_label(folder, metadata, dsize, in_channels, out_channels, params):
     alphabet = params['alphabet']
     image_name_list = metadata.image_name.unique()
     set_size = len(image_name_list)
@@ -90,7 +90,7 @@ def get_image_text_label_gen(folder, metadata, dsize, in_channels, out_channels,
     x = np.zeros((set_size, dsize[0], dsize[1], in_channels))
     y = np.zeros((set_size, 1, text_max_len, out_channels))
     for row in metadata.itertuples():
-        plate_text = row.text
+        plate_text = row.plate.lower()
         plate_text = f"{plate_text: <{text_max_len}}"
         idx = row.idx
         for idx_letter in range(text_max_len):

@@ -8,7 +8,7 @@ from cv.image_processing import (
     get_warping,
     warp_image,
     pred2im,
-    get_min_area_rectangle,
+    get_rectangle,
 )
 from cv.tensorflow_models.unet_little import get_model_definition
 from io_utils.data_source import (
@@ -62,10 +62,11 @@ def segment_plates(params, logger):
     # Constants
     plate_shape = (200, 50)
     color = (255, 0, 0)
-    min_pct = 0.01
+    min_pct = 0.03
     max_pct = 0.20
-    min_area = (dsize[0]*min_pct) * (dsize[1]*min_pct)
-    max_area = (dsize[0]*max_pct) * (dsize[1]*max_pct)
+    big_shape = (512, 512)
+    min_area = (big_shape[0]*min_pct) * (big_shape[1]*min_pct)
+    max_area = (big_shape[0]*max_pct) * (big_shape[1]*max_pct)
     thickness = 3
     debug_level = 0
     #
@@ -81,32 +82,34 @@ def segment_plates(params, logger):
         'idx': range(len(meta_im_idx)),
     })
     meta = meta.merge(meta_im_idx, on=['image_name'], how='left')
-    images, im_labels = get_image_label(input_folder, meta, dsize, in_channels, out_channels, params)
+    x, _ = get_image_label(input_folder, meta, dsize, in_channels, out_channels, params)
     # im_labels = [pred2im(im_labels*255, dsize, idx, 1) for idx in range(len(im_labels))]
     # print_images(im_labels, meta, out_folder, "im_labels", logger)
-    images = [pred2im(images, dsize, idx, in_channels) for idx in range(len(images))]
+    x = [pred2im(x, dsize, idx, in_channels) for idx in range(len(x))]
     logger.info("Pre process input")
-    ims_pred = [preprocess_input(im) for im in images]
+    x = [preprocess_input(im) for im in x]
     logger.info("Inference")
-    ims_pred = [im.reshape(1, dsize[0], dsize[0], 3) for im in ims_pred]
-    ims_pred = [(model.predict(im) * 255).round() for im in ims_pred]
-    images = [im.reshape(dsize[0], dsize[0], 3) for im in images]
-    ims_pred = [pred2im(y, dsize, 0, 3) for y in ims_pred]
+    x = [im.reshape(1, dsize[0], dsize[0], 3) for im in x]
+    y = [(model.predict(im) * 255).round() for im in x]
+    y = [pred2im(im, dsize, 0, 3) for im in y]
     # print_images(ims_pred, meta, out_folder, "im_pred", logger)
+    images, _ = get_image_label(input_folder, meta, big_shape, in_channels, out_channels, params)
+    images = [pred2im(images, big_shape, idx, in_channels) for idx in range(len(images))]
+    images = [im.reshape(big_shape[0], big_shape[0], 3) for im in images]
+    y = [cv2.resize(im, dsize=big_shape, interpolation=cv2.INTER_CUBIC) for im in y]
     logger.info("Getting contours")
-    contours = [get_contours_rgb(im, min_area, max_area) for im in ims_pred]
-    logger.info("Draw contours")
-    im_contours = [cv2.drawContours(
-        im.copy(), c, -1, color, thickness, 8) for im, c in zip(images, contours)]
-    print_images(im_contours, meta, out_folder, "contours", logger)
+    contours = [get_contours_rgb(im, min_area, max_area) for im in y]
+    #logger.info("Draw contours")
+    #im_contours = [cv2.drawContours(im.copy(), c, -1, color, thickness, 8) for im, c in zip(images, contours)]
+    #print_images(im_contours, meta, out_folder, "contours", logger)
     logger.info("Straight bounding boxes")
     boxes = [cv2.boundingRect(c[0]) if len(c) > 0 else None for c in contours]
-    ims_pred = [draw_rectangle(im, b) for im, b in zip(ims_pred, boxes)]
+    y = [draw_rectangle(im, b) for im, b in zip(y, boxes)]
     logger.info("Min area bounding boxes")
-    boxes = [get_min_area_rectangle(c) for c in contours]
+    boxes = [get_rectangle(c) for c in contours]
     if debug_level > 0:
-        ims_pred = [cv2.drawContours(im, [r], 0, color, thickness) for im, r in zip(ims_pred, boxes)]
-        print_images(ims_pred, meta, out_folder, "min_area_boxes", logger)
+        y = [cv2.drawContours(im, [r], 0, color, thickness) for im, r in zip(y, boxes)]
+        print_images(y, meta, out_folder, "min_area_boxes", logger)
     logger.info("Warp images")
     warpings = [get_warping(q, plate_shape) for q in boxes]
     ims_pred = [warp_image(im, w, plate_shape) for (im, w) in zip(images, warpings)]

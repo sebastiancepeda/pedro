@@ -4,18 +4,17 @@ import pandas as pd
 from loguru import logger
 
 from cv.image_processing import (
-    get_contours_rgb, print_images, get_warping,
-    warp_image, pred2im, get_min_area_rectangle,
+    pred2im,
 )
 from cv.tensorflow_models.unet2text import (
     get_model_definition, normalize_image_shape)
 from io_utils.data_source import (
-    get_image_text_label_gen, get_plates_text_metadata)
+    get_image_text_label, get_plates_text_metadata)
 
 
 def get_params():
     path = '/home/sebastian/projects/pedro/data'
-    input_folder = f'{path}/plates/output_plate_text_segmentation'
+    input_folder = f'{path}/plates/output_plate_segmentation'
     output_folder = f'{path}/plates/output_plate_ocr'
     width = 200
     height = 50
@@ -31,7 +30,7 @@ def get_params():
         'dsize': dsize,
         'model_folder': f'{output_folder}/model',
         'model_file': f'{output_folder}/model/best_model.h5',
-        'labels': f"{input_folder}/labels_plates_ocr_1.json",
+        # 'labels': f"{input_folder}/labels_plates_ocr_1.json",
         'metadata': f"{input_folder}/files.csv",
         'alphabet': alphabet,
         'model_params': {
@@ -77,8 +76,8 @@ def ocr_plates(params, logger):
         'idx': range(len(metadata_idx)),
     })
     metadata = metadata.merge(metadata_idx, on=['image_name'], how='left')
-    images, _ = get_image_text_label_gen(input_folder, metadata, dsize,
-                                    in_channels, out_channels, params)
+    images, _ = get_image_text_label(input_folder, metadata, dsize,
+                                     in_channels, out_channels, params)
     images = [pred2im(images, dsize, idx, in_channels) for idx in range(len(images))]
     logger.info("Pre process input")
     images_pred = [preprocess_input(im) for im in images]

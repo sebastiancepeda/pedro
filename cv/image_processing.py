@@ -75,7 +75,7 @@ def image_set2list(y_train_pred, y_val_pred):
     return images
 
 
-def get_min_area_rectangle(contours):
+def get_rectangle(contours):
     rectangle = None
     if len(contours) > 0:
         contour = contours[0]
