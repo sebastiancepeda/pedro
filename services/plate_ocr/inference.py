@@ -10,6 +10,7 @@ from cv.tensorflow_models.unet2text import (
     get_model_definition, normalize_image_shape)
 from io_utils.data_source import (
     get_image_text_label, get_plates_text_metadata)
+from io_utils.utils import set_index
 
 
 def get_params():
@@ -69,14 +70,11 @@ def ocr_plates(params, logger):
     model, preprocess_input = get_model_definition(**model_params)
     model.load_weights(model_file)
     logger.info("Loading data")
-    metadata = get_plates_text_metadata(params)
-    metadata_idx = metadata.image_name.unique()
-    metadata_idx = pd.DataFrame(data={
-        'image_name': metadata_idx,
-        'idx': range(len(metadata_idx)),
-    })
-    metadata = metadata.merge(metadata_idx, on=['image_name'], how='left')
-    images, _ = get_image_text_label(input_folder, metadata, dsize,
+    meta = get_plates_text_metadata(params)
+    meta.image = 'plates_' + meta.image
+    meta.image = meta.image.str.split('.').str[0]+'.png'
+    meta = set_index(meta)
+    images, _ = get_image_text_label(input_folder, meta, dsize,
                                      in_channels, out_channels, params)
     images = [pred2im(images, dsize, idx, in_channels) for idx in range(len(images))]
     logger.info("Pre process input")
@@ -90,7 +88,7 @@ def ocr_plates(params, logger):
     alphabet = params['alphabet']
     idx2char = {alphabet[char]: char for char in alphabet.keys()}
     texts = []
-    for y, im_name, text in zip(images_pred, metadata.image_name, metadata.text):
+    for y, im_name, text in zip(images_pred, meta.image_name, meta.plate):
         y = y.flatten().tolist()
         text_pred = [idx2char[idx] for idx in y]
         text_pred = ''.join(text_pred)
