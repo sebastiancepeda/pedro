@@ -34,7 +34,7 @@ def get_model_definition(img_height, img_width, in_channels, out_channels):
         'kernel_initializer': 'he_normal',
         'padding': 'same',
     }
-    h_dim = 10
+    h_dim = 5
     outs = {
         1: h_dim,  # 64
         2: h_dim,
