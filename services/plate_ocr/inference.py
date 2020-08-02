@@ -1,6 +1,5 @@
 import cv2
 import numpy as np
-import pandas as pd
 from loguru import logger
 
 from cv.image_processing import (
@@ -57,14 +56,6 @@ def ocr_plates(params, logger):
     out_folder = params['output_folder']
     in_channels = params['model_params']['in_channels']
     out_channels = params['model_params']['out_channels']
-    # Constants
-    dsize_cv2 = (dsize[1], dsize[0])
-    color = (255, 0, 0)
-    min_area = 10 * 40
-    max_area = 100 * 200
-    thick = 3
-    debug_level = 0
-    #
     logger.info("Loading model")
     model_params = params['model_params']
     model, preprocess_input = get_model_definition(**model_params)
@@ -84,7 +75,6 @@ def ocr_plates(params, logger):
                    images_pred]
     images_pred = [model.predict(im) for im in images_pred]
     images_pred = [np.argmax(im, axis=3) for im in images_pred]
-    images = [im.reshape(dsize[0], dsize[1], in_channels) for im in images]
     alphabet = params['alphabet']
     idx2char = {alphabet[char]: char for char in alphabet.keys()}
     texts = []
@@ -92,7 +82,7 @@ def ocr_plates(params, logger):
         y = y.flatten().tolist()
         text_pred = [idx2char[idx] for idx in y]
         text_pred = ''.join(text_pred)
-        logger.info(f"Text {im_name: <7}: {text_pred} - {text}")
+        logger.info(f"Text {im_name: <7}: {text_pred.upper()} - {text}")
         texts.append(text_pred)
 
 

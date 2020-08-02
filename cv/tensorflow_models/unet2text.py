@@ -37,7 +37,7 @@ def get_model_definition(img_height, img_width, in_channels, out_channels):
     }
     drop_p = 0.1
     drop_flag = False
-    h_dim = 100  # 100
+    h_dim = 10  # 100
     outs = {
         1: h_dim,  # 64
         2: h_dim,
