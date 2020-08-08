@@ -58,6 +58,7 @@ def train_model_gen(data_train, data_val, model, params, logger):
         epochs=epochs,
         validation_data=data_val,
         validation_steps=len(data_val),
+        shuffle=False,
         callbacks=callbacks,
     )
     model.load_weights(model_file)
