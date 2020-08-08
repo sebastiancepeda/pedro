@@ -34,3 +34,31 @@ def train_model(x_train, y_train, x_val, y_val, get_model_definition, params,
     )
     model.load_weights(model_file)
     return model
+
+
+def train_model_gen(data_train, data_val, model, params, logger):
+    epochs = params['epochs']
+    model_file = params['model_file']
+    model_folder = params['model_folder']
+    #
+    callbacks = [
+        keras.callbacks.ModelCheckpoint(
+            model_file,
+            save_weights_only=True,
+            save_best_only=False,
+            # save_best_only=True,
+            mode='min'),
+    ]
+    if not os.path.exists(model_folder):
+        os.makedirs(model_folder)
+    # Training model
+    model.fit(
+        x=data_train,
+        steps_per_epoch=1,
+        epochs=epochs,
+        validation_data=data_val,
+        validation_steps=1,
+        callbacks=callbacks,
+    )
+    model.load_weights(model_file)
+    return model

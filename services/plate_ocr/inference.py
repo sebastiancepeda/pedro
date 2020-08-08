@@ -3,7 +3,7 @@ import numpy as np
 from loguru import logger
 
 from cv.image_processing import (
-    pred2im,
+    pred2im, print_images
 )
 from cv.tensorflow_models.unet2text import (
     get_model_definition, normalize_image_shape)
@@ -49,6 +49,16 @@ def draw_rectangle(im, r):
     return im
 
 
+def generate_txt(inv_alphabet):
+    text_len = np.random.randint(4, 10)
+    text = np.random.randint(len(inv_alphabet), size=(text_len))
+    text = [inv_alphabet[idx] for idx in text]
+    text = ''.join(text)
+    text = text.upper()
+    # text = f"{text: <13}"
+    return text
+
+
 def ocr_plates(params, logger):
     model_file = params['model_file']
     input_folder = params['input_folder']
@@ -56,8 +66,9 @@ def ocr_plates(params, logger):
     out_folder = params['output_folder']
     in_channels = params['model_params']['in_channels']
     out_channels = params['model_params']['out_channels']
-    logger.info("Loading model")
+    alphabet = params['alphabet']
     model_params = params['model_params']
+    logger.info("Loading model")
     model, preprocess_input = get_model_definition(**model_params)
     model.load_weights(model_file)
     logger.info("Loading data")
@@ -65,25 +76,38 @@ def ocr_plates(params, logger):
     meta.image = 'plates_' + meta.image
     meta.image = meta.image.str.split('.').str[0]+'.png'
     meta = set_index(meta)
-    images, _ = get_image_text_label(input_folder, meta, dsize,
-                                     in_channels, out_channels, params)
+    images, _ = get_image_text_label(input_folder, meta, dsize, in_channels, out_channels, params)
     images = [pred2im(images, dsize, idx, in_channels) for idx in range(len(images))]
     logger.info("Pre process input")
     images_pred = [preprocess_input(im) for im in images]
     logger.info("Inference")
-    images_pred = [im.reshape(1, dsize[0], dsize[1], in_channels) for im in
-                   images_pred]
+    images_pred = [im.reshape(1, dsize[0], dsize[1], in_channels) for im in images_pred]
     images_pred = [model.predict(im) for im in images_pred]
     images_pred = [np.argmax(im, axis=3) for im in images_pred]
+    print_images(images, meta, out_folder, "images_text", logger)
     alphabet = params['alphabet']
-    idx2char = {alphabet[char]: char for char in alphabet.keys()}
+    inv_alphabet = {alphabet[char]: char for char in alphabet.keys()}
     texts = []
     for y, im_name, text in zip(images_pred, meta.image_name, meta.plate):
         y = y.flatten().tolist()
-        text_pred = [idx2char[idx] for idx in y]
+        text_pred = [inv_alphabet[idx] for idx in y]
         text_pred = ''.join(text_pred)
         logger.info(f"Text {im_name: <7}: {text_pred.upper()} - {text}")
         texts.append(text_pred)
+    font = cv2.FONT_HERSHEY_TRIPLEX
+    clr = (0, 255, 0)
+    pos = (30, 30)
+    line = cv2.LINE_AA
+    images = [cv2.cvtColor(im, cv2.COLOR_GRAY2RGB) for im in images]
+    images = [cv2.putText(im, txt, pos, font, 1, clr, 2, line) for im, txt in zip(images, texts)]
+    print_images(images, meta, out_folder, "images_text", logger)
+    clr = (255, 255, 255)
+    images_sim_len = 10
+    images_sim = [np.zeros((dsize[0], dsize[1])).astype('uint8') for idx in range(images_sim_len)]
+    texts_sim = [generate_txt(inv_alphabet) for idx in range(images_sim_len)]
+    images_sim = [cv2.cvtColor(im, cv2.COLOR_GRAY2RGB) for im in images_sim]
+    images_sim = [cv2.putText(im, txt, pos, font, 1, clr, 2, line) for im, txt in zip(images_sim, texts_sim)]
+    print_images(images_sim, meta, out_folder, "images_sim", logger)
 
 
 if __name__ == "__main__":

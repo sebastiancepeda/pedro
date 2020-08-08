@@ -1,8 +1,10 @@
 from loguru import logger
 
-from cv.tensorflow_models.tensorflow_utils import train_model
-from cv.tensorflow_models.unet2text import get_model_definition, normalize_image_shape
-from io_utils.data_source import get_image_text_label, get_plates_text_metadata
+from cv.tensorflow_models.tensorflow_utils import train_model_gen
+from cv.tensorflow_models.unet2text import get_model_definition, \
+    normalize_image_shape
+from io_utils.data_source import get_plates_text_metadata
+from io_utils.image_text_label_generator import ImageTextLabelGenerator
 from io_utils.utils import set_index
 
 
@@ -21,7 +23,7 @@ def get_params():
     params = {
         'input_folder': input_folder,
         'output_folder': output_folder,
-        'epochs': 1*1000,
+        'epochs': 1 * 1000,
         'dsize': dsize,
         'model_folder': f'{output_folder}/model',
         'model_file': f'{output_folder}/model/best_model.h5',
@@ -40,22 +42,28 @@ def get_params():
 
 def train_ocr_model(params):
     dsize = params['dsize']
-    in_channels = params['model_params']['in_channels']
-    out_channels = params['model_params']['out_channels']
+    model_params = params['model_params']
     in_folder = params['input_folder']
+    #
+    in_channels = model_params['in_channels']
+    out_channels = model_params['out_channels']
     metadata = get_plates_text_metadata(params)
     metadata.image = 'plates_' + metadata.image
-    metadata.image = metadata.image.str.split('.').str[0]+'.png'
+    metadata.image = metadata.image.str.split('.').str[0] + '.png'
     train_meta = metadata.query("set == 'train'")
     test_meta = metadata.query("set == 'test'")
     train_meta = set_index(train_meta)
     test_meta = set_index(test_meta)
-    x_train, y_train = get_image_text_label(in_folder, train_meta, dsize,
-                                            in_channels, out_channels, params)
-    x_val, y_val = get_image_text_label(in_folder, test_meta, dsize,
-                                        in_channels, out_channels, params)
-    train_model(x_train, y_train, x_val, y_val, get_model_definition, params,
-                logger)
+    model, preprocess_input = get_model_definition(**model_params)
+    data_train = ImageTextLabelGenerator(
+        in_folder, train_meta, dsize, in_channels, out_channels,
+        preprocess_input, params)
+    data_val = ImageTextLabelGenerator(
+        in_folder, test_meta, dsize, in_channels, out_channels,
+        preprocess_input, params)
+    x_train, y_train = data_train.__getitem__(0)
+    x_val, y_val = data_val.__getitem__(0)
+    train_model_gen(data_train, data_val, model, params, logger)
 
 
 if __name__ == "__main__":
