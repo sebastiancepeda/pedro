@@ -61,8 +61,6 @@ def train_ocr_model(params):
     data_val = ImageTextLabelGenerator(
         in_folder, test_meta, dsize, in_channels, out_channels,
         preprocess_input, params)
-    x_train, y_train = data_train.__getitem__(0)
-    x_val, y_val = data_val.__getitem__(0)
     train_model_gen(data_train, data_val, model, params, logger)
 
 

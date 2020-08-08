@@ -20,7 +20,7 @@ class ImageTextLabelGenerator(tf.keras.utils.Sequence):
         self.on_epoch_end()
 
     def __len__(self):
-        return 1
+        return self.set_size
 
     def __getitem__(self, index):
         x, y = get_image_text_label(
