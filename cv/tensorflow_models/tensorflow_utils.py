@@ -54,10 +54,10 @@ def train_model_gen(data_train, data_val, model, params, logger):
     # Training model
     model.fit(
         x=data_train,
-        steps_per_epoch=1,
+        steps_per_epoch=len(data_train),
         epochs=epochs,
         validation_data=data_val,
-        validation_steps=1,
+        validation_steps=len(data_val),
         callbacks=callbacks,
     )
     model.load_weights(model_file)
