@@ -26,9 +26,13 @@ class ImageTextLabelGenerator(tf.keras.utils.Sequence):
         return len(self.x_all)
 
     def __getitem__(self, index):
-        x = self.x_all[self.index_im]
-        y = self.y_all[self.index_im]
+        x = self.x_all[self.index_im, :, :, :]
+        y = self.y_all[self.index_im, :, :, :]
+        x = x.reshape(1, x.shape[0], x.shape[1], x.shape[2])
+        y = y.reshape(1, y.shape[0], y.shape[1], y.shape[2])
         self.index_im = self.index_im + 1
+        if self.index_im >= len(self.x_all):
+            self.on_epoch_end()
         x = self.preprocess_input(x)
         return x, y
 
