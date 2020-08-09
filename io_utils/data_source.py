@@ -118,7 +118,7 @@ def get_image_text_label_sim(dsize, in_channels, out_channels, alphabet):
     set_size = 1000
     text_max_len = 13
     font = cv2.FONT_HERSHEY_TRIPLEX
-    clr = (0, 255, 0)
+    clr = (255, 255, 255)
     pos = (30, 30)
     line = cv2.LINE_AA
     x = np.zeros((set_size, dsize[0], dsize[1], in_channels))
