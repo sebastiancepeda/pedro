@@ -49,9 +49,6 @@ def draw_rectangle(im, r):
     return im
 
 
-
-
-
 def ocr_plates(params, logger):
     model_file = params['model_file']
     input_folder = params['input_folder']
@@ -60,6 +57,7 @@ def ocr_plates(params, logger):
     in_channels = params['model_params']['in_channels']
     out_channels = params['model_params']['out_channels']
     model_params = params['model_params']
+    alphabet = params['alphabet']
     logger.info("Loading model")
     model, preprocess_input = get_model_definition(**model_params)
     model.load_weights(model_file)
@@ -68,7 +66,7 @@ def ocr_plates(params, logger):
     meta.image = 'plates_' + meta.image
     meta.image = meta.image.str.split('.').str[0]+'.png'
     meta = set_index(meta)
-    images, _ = get_image_text_label(input_folder, meta, dsize, in_channels, out_channels, params)
+    images, _ = get_image_text_label(input_folder, meta, dsize, in_channels, out_channels, alphabet)
     images = [pred2im(images, dsize, idx, in_channels) for idx in range(len(images))]
     logger.info("Pre process input")
     images_pred = [preprocess_input(im) for im in images]
