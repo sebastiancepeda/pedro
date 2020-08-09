@@ -8,7 +8,7 @@ from cv.image_processing import (
 from cv.tensorflow_models.unet2text import (
     get_model_definition, normalize_image_shape)
 from io_utils.data_source import (
-    get_image_text_label, get_plates_text_metadata)
+    get_image_text_label, get_plates_text_metadata, generate_txt)
 from io_utils.utils import set_index
 
 
@@ -49,14 +49,7 @@ def draw_rectangle(im, r):
     return im
 
 
-def generate_txt(inv_alphabet):
-    text_len = np.random.randint(4, 10)
-    text = np.random.randint(len(inv_alphabet), size=(text_len))
-    text = [inv_alphabet[idx] for idx in text]
-    text = ''.join(text)
-    text = text.upper()
-    # text = f"{text: <13}"
-    return text
+
 
 
 def ocr_plates(params, logger):
@@ -66,7 +59,6 @@ def ocr_plates(params, logger):
     out_folder = params['output_folder']
     in_channels = params['model_params']['in_channels']
     out_channels = params['model_params']['out_channels']
-    alphabet = params['alphabet']
     model_params = params['model_params']
     logger.info("Loading model")
     model, preprocess_input = get_model_definition(**model_params)

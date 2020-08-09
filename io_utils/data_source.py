@@ -82,8 +82,7 @@ def get_image_label(folder, metadata, dsize, in_channels, out_channels, params):
     return x, y
 
 
-def get_image_text_label(folder, metadata, dsize, in_channels, out_channels, params):
-    alphabet = params['alphabet']
+def get_image_text_label(folder, metadata, dsize, in_channels, out_channels, alphabet):
     image_name_list = metadata.image_name.unique()
     set_size = len(image_name_list)
     text_max_len = 13
@@ -99,6 +98,43 @@ def get_image_text_label(folder, metadata, dsize, in_channels, out_channels, par
             y[idx, 0, idx_letter, label_idx] = 1.0
         im = load_image(row, folder, dsize, in_channels)
         if in_channels == 3:
+            x[idx, :, :, :] = im[:, :, 0:in_channels]
+        else:
+            x[idx, :, :, 0] = im[:, :]
+    return x, y
+
+
+def generate_txt(inv_alphabet):
+    text_len = np.random.randint(4, 10)
+    text = np.random.randint(len(inv_alphabet), size=text_len)
+    text = [inv_alphabet[idx] for idx in text]
+    text = ''.join(text)
+    text = text.upper()
+    return text
+
+
+def get_image_text_label_sim(dsize, in_channels, out_channels, alphabet):
+    inv_alphabet = {alphabet[char]: char for char in alphabet.keys()}
+    set_size = 1000
+    text_max_len = 13
+    font = cv2.FONT_HERSHEY_TRIPLEX
+    clr = (0, 255, 0)
+    pos = (30, 30)
+    line = cv2.LINE_AA
+    x = np.zeros((set_size, dsize[0], dsize[1], in_channels))
+    y = np.zeros((set_size, 1, text_max_len, out_channels))
+    for idx in range(set_size):
+        plate_text = generate_txt(inv_alphabet)
+        plate_text = f"{plate_text: <{text_max_len}}"
+        plate_text_buff = plate_text.lower()
+        for idx_letter in range(text_max_len):
+            label = plate_text_buff[idx_letter]
+            label_idx = alphabet[label]
+            y[idx, 0, idx_letter, label_idx] = 1.0
+        im = np.zeros((dsize[0], dsize[1])).astype('uint8')
+        im = cv2.cvtColor(im, cv2.COLOR_GRAY2RGB)
+        im = cv2.putText(im, plate_text, pos, font, 1, clr, 2, line)
+        if im.shape[2] == 3:
             x[idx, :, :, :] = im[:, :, 0:in_channels]
         else:
             x[idx, :, :, 0] = im[:, :]
