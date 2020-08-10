@@ -91,13 +91,6 @@ def ocr_plates(params, logger):
     images = [cv2.cvtColor(im, cv2.COLOR_GRAY2RGB) for im in images]
     images = [cv2.putText(im, txt, pos, font, 1, clr, 2, line) for im, txt in zip(images, texts)]
     print_images(images, meta, out_folder, "images_text", logger)
-    clr = (255, 255, 255)
-    images_sim_len = 10
-    images_sim = [np.zeros((dsize[0], dsize[1])).astype('uint8') for idx in range(images_sim_len)]
-    texts_sim = [generate_txt(inv_alphabet) for idx in range(images_sim_len)]
-    images_sim = [cv2.cvtColor(im, cv2.COLOR_GRAY2RGB) for im in images_sim]
-    images_sim = [cv2.putText(im, txt, pos, font, 1, clr, 2, line) for im, txt in zip(images_sim, texts_sim)]
-    print_images(images_sim, meta, out_folder, "images_sim", logger)
 
 
 if __name__ == "__main__":
