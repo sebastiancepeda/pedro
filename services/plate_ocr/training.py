@@ -101,4 +101,4 @@ def train_ocr_model_sim(params):
 
 
 if __name__ == "__main__":
-    train_ocr_model_sim(get_params())
+    train_ocr_model(get_params())
