@@ -1,6 +1,8 @@
 import cv2
 import numpy as np
 from loguru import logger
+import skimage.transform
+from skimage.util import img_as_ubyte
 
 from cv.image_processing import (
     pred2im, print_images
@@ -8,7 +10,7 @@ from cv.image_processing import (
 from cv.tensorflow_models.unet2text import (
     get_model_definition, normalize_image_shape)
 from io_utils.data_source import (
-    get_image_text_label, get_plates_text_metadata, generate_txt)
+    get_image_text_label, get_plates_text_metadata)
 from io_utils.utils import set_index
 
 
@@ -91,6 +93,11 @@ def ocr_plates(params, logger):
     images = [cv2.cvtColor(im, cv2.COLOR_GRAY2RGB) for im in images]
     images = [cv2.putText(im, txt, pos, font, 1, clr, 2, line) for im, txt in zip(images, texts)]
     print_images(images, meta, out_folder, "images_text", logger)
+
+    afine_tf = skimage.transform.AffineTransform(shear=0.1)
+    images = [skimage.transform.warp(im, inverse_map=afine_tf) for im in images]
+    images = [img_as_ubyte(im) for im in images]
+    print_images(images, meta, out_folder, "images_text_warp", logger)
 
 
 if __name__ == "__main__":

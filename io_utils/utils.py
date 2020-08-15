@@ -13,3 +13,10 @@ def set_index(meta):
     })
     meta = meta.merge(index, on=['image_name'], how='left')
     return meta
+
+
+class CustomLogger:
+
+    def __init__(self, prefix, base_logger):
+        self.info = lambda msg: base_logger.info(f"[{prefix}] {msg}")
+        self.debug = lambda msg: base_logger.debug(f"[{prefix}] {msg}")

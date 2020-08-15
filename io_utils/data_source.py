@@ -40,7 +40,6 @@ def load_image_label(im_data, folder, dsize, in_channels, alphabet):
     # Filling the zero class (non in the alphabet)
     gt_zero = gt.max(axis=2)
     gt_zero = (gt_zero == 0.0).astype(int)
-    # a = gt_zero.min(), gt_zero.max()
     gt[:, :, 0] = gt_zero
     return im, gt
 
@@ -57,10 +56,8 @@ def get_labels(alphabet, dsize_cv2, im_shape, row):
     pts = np.array(pts, np.int32)
     pts = [pts.reshape((-1, 1, 2))]
     im_label = np.zeros(im_shape)
-    # a = im_label.mean()
     cv2.fillPoly(im_label, pts, color=1)
     im_label = cv2.resize(im_label, dsize=dsize_cv2, interpolation=cv2.INTER_CUBIC)
-    # c = im_label.mean()
     return im_label, label_idx
 
 
@@ -80,6 +77,23 @@ def get_image_label(folder, metadata, dsize, in_channels, out_channels, params):
             x[idx, :, :, 0] = im[:, :]
         y[idx, :, :, :] = gt
     return x, y
+
+
+def get_image(filename, dsize, in_channels):
+    x = np.zeros((1, dsize[0], dsize[1], in_channels))
+    dsize_cv2 = (dsize[1], dsize[0])
+    # Image load
+    im = cv2.imread(filename)
+    assert im is not None, f"Error while reading image: {filename}"
+    im = cv2.cvtColor(im, cv2.COLOR_BGR2GRAY)
+    if in_channels == 3:
+        im = cv2.cvtColor(im, cv2.COLOR_GRAY2RGB)
+    im = cv2.resize(im, dsize=dsize_cv2, interpolation=cv2.INTER_CUBIC)
+    if in_channels == 3:
+        x[0, :, :, :] = im[:, :, 0:in_channels]
+    else:
+        x[0, :, :, 0] = im[:, :]
+    return x
 
 
 def get_image_text_label(folder, metadata, dsize, in_channels, out_channels, alphabet):
