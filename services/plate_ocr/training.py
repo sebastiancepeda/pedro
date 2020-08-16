@@ -12,8 +12,8 @@ from io_utils.utils import set_index
 
 def get_params():
     path = '/home/sebastian/projects/pedro/data'
-    input_folder = f'{path}/plates/output_plate_segmentation'
-    output_folder = f'{path}/plates/output_plate_ocr'
+    input_folder = f'{path}/plates/plate_segmentation'
+    output_folder = f'{path}/plates/plate_ocr'
     width = 200
     height = 50
     height, width = normalize_image_shape(height, width)

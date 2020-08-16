@@ -11,7 +11,7 @@ from io_utils.utils import set_index
 def get_params():
     path = '/home/sebastian/projects/pedro/data'
     input_folder = f'{path}/plates/input'
-    output_folder = f'{path}/plates/output_plate_segmentation'
+    output_folder = f'{path}/plates/plate_segmentation'
     # dsize = (576, 576)
     dsize = (256, 256)
     alphabet = [' ', 'plate']
