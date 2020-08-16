@@ -87,12 +87,8 @@ def get_rectangle(contours):
 
 def get_xs(rectangle):
     result = list(rectangle)
-    # centroid
     c = np.mean(rectangle, axis=0)
-    # sort by angle
-    result.sort(key=lambda p: math.atan2(p[1] - c[1], p[0] - c[0]))
-    x1, x2, x3, x0 = result
-    result = x0, x1, x2, x3
+    result.sort(key=lambda p: math.degrees(math.atan2(p[0] - c[0], -(p[1] - c[1]))))
     return result
 
 

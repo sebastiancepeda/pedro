@@ -1,5 +1,4 @@
 import glob
-
 import cv2
 
 from cv.image_processing import (
@@ -7,8 +6,9 @@ from cv.image_processing import (
     get_warping,
     warp_image,
     pred2im,
-    get_rectangle,
+    get_quadrilateral,
     save_image,
+    get_rectangle,
 )
 from cv.tensorflow_models.unet_little import get_model_definition
 from io_utils.data_source import (
@@ -34,7 +34,7 @@ def get_params():
     plate_shape = (200, 50)
     color = (255, 0, 0)
     thickness = 3
-    debug_level = 0
+    debug_level = 1
     min_pct = 0.03
     max_pct = 0.20
     min_area = (big_shape[0] * min_pct) * (big_shape[1] * min_pct)
@@ -103,20 +103,26 @@ def plate_segmentation(event, context, logger):
     y = cv2.resize(y, dsize=big_shape, interpolation=cv2.INTER_CUBIC)
     logger.info("Getting contours")
     contours = get_contours_rgb(y, min_area, max_area)
-    logger.info("Straight bounding box")
-    boxes = cv2.boundingRect(contours[0]) if len(contours) > 0 else None
-    y = draw_rectangle(y, boxes)
-    logger.info("Min area bounding box")
-    box = get_rectangle(contours)
     if debug_level > 0:
-        y = cv2.drawContours(y, [box], 0, color, thickness)
+        save_image(y, f"{out_folder}/rectangle_{file_debug_name}.png")
+    if len(contours) > 0:
+        # logger.info("Min area bounding box")
+        rectangle = get_rectangle(contours)
+        # box = get_quadrilateral(contours[0])
+        if debug_level > 0:
+            logger.info(f"Saving rectangle")
+            image_debug = cv2.drawContours(image.copy(), [rectangle], 0, color, thickness)
+            save_image(image_debug, f"{out_folder}/rectangle_{file_debug_name}.png")
+            # image_debug = cv2.drawContours(image.copy(), [box], 0, color, thickness)
+            # logger.info(f"Saving min_area_boxes")
+            # save_image(image_debug, f"{out_folder}/min_area_box_{file_debug_name}.png")
+        logger.info("Warp images")
+        warping = get_warping(rectangle, plate_shape)
+        im_pred = warp_image(image, warping, plate_shape)
         logger.info(f"Saving min_area_boxes")
-        save_image(y, f"{out_folder}/min_area_box_{file_debug_name}.png")
-    logger.info("Warp images")
-    warping = get_warping(box, plate_shape)
-    im_pred = warp_image(image, warping, plate_shape)
-    logger.info(f"Saving min_area_boxes")
-    save_image(im_pred, f"{out_folder}/plate_{file_debug_name}.png")
+        save_image(im_pred, f"{out_folder}/plate_{file_debug_name}.png")
+    else:
+        logger.info("Countours not found")
 
 
 def segment_plates(params):
