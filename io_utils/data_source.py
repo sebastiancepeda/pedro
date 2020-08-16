@@ -202,7 +202,11 @@ def get_filenames(path):
 
 def get_segmentation_labels(path):
     labels = glob.glob(f"{path}/*.json")
+    dates = [label.split('/')[-1] for label in labels]
+    dates = [date.split('.')[0] for date in dates]
+    dates = [date.split('_')[-1] for date in dates]
     labels = [get_labels_plates_text(label) for label in labels]
+    labels = [label.assign(date=date) for label, date in zip(labels, dates)]
     labels = pd.concat(labels, axis=0)
     labels = labels.rename(columns={'filename': 'file_name'})
     labels.file_name = labels.file_name.str.split('.').str[0]

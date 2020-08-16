@@ -52,6 +52,10 @@ def train_plate_segmentation(params):
     test_meta = test_meta.merge(labels, on=['file_name'], how='left')
     train_meta = train_meta.loc[train_meta.label.notnull()]
     test_meta = test_meta.loc[test_meta.label.notnull()]
+    train_meta = train_meta.sort_values(by=['file_name', 'date'], ascending=[False, False])
+    test_meta = test_meta.sort_values(by=['file_name', 'date'], ascending=[False, False])
+    train_meta = train_meta.drop_duplicates(subset=['file_name'])
+    test_meta = test_meta.drop_duplicates(subset=['file_name'])
     train_meta = set_index(train_meta)
     test_meta = set_index(test_meta)
     logger.info(f"Train meta shape: {train_meta.shape}")
