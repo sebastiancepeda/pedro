@@ -30,12 +30,13 @@ def get_params():
     alphabet = {char: idx for char, idx in zip(alphabet, range(len(alphabet)))}
     in_channels = 3
     out_channels = len(alphabet)
-    big_shape = (512, 512)
+    # big_shape = (512, 512)
+    big_shape = (1024, 1024)
     plate_shape = (200, 50)
     color = (255, 0, 0)
     thickness = 3
-    debug_level = 1
-    min_pct = 0.03
+    debug_level = 0
+    min_pct = 0.04
     max_pct = 0.20
     min_area = (big_shape[0] * min_pct) * (big_shape[1] * min_pct)
     max_area = (big_shape[0] * max_pct) * (big_shape[1] * max_pct)
