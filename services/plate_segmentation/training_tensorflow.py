@@ -54,6 +54,8 @@ def train_plate_segmentation(params):
     test_meta = test_meta.loc[test_meta.label.notnull()]
     train_meta = set_index(train_meta)
     test_meta = set_index(test_meta)
+    logger.info(f"Train meta shape: {train_meta.shape}")
+    logger.info(f"Test meta shape: {test_meta.shape}")
     x_train, y_train = get_image_label(input_folder, train_meta, dsize, in_channels, out_channels, params)
     x_val, y_val = get_image_label(input_folder, test_meta, dsize, in_channels, out_channels, params)
     train_model(x_train, y_train, x_val, y_val, get_model_definition, params, logger)
