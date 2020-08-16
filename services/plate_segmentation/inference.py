@@ -21,7 +21,7 @@ from io_utils.utils import (
 
 def get_params():
     path = '/home/sebastian/projects/pedro/data'
-    input_folder = f'{path}/plates/input'
+    input_folder = f'{path}/plates/input/'
     output_folder = f'{path}/plates/plate_segmentation'
     # dsize = (576, 576)
     dsize = (256, 256)
@@ -129,7 +129,8 @@ def segment_plates(params):
     model, preprocess_input = get_model_definition(**model_params)
     model.load_weights(model_file)
     logger.info("Loading data")
-    files = glob.glob(f"{input_folder}/*.jpg")
+    files = glob.glob(f"{input_folder}/train/*.jpg")
+    files = files + glob.glob(f"{input_folder}/test/*.jpg")
     params_subset = [
         'dsize',
         'model_params',
