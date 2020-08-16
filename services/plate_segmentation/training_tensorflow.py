@@ -45,7 +45,8 @@ def train_plate_segmentation(params):
 
     train_meta = get_filenames(f"{input_folder}/train")
     test_meta = get_filenames(f"{input_folder}/test")
-
+    logger.info(f"Train meta shape: {train_meta.shape}")
+    logger.info(f"Test meta shape: {test_meta.shape}")
     labels = get_segmentation_labels(params['labels'])
     train_meta = train_meta.merge(labels, on=['file_name'], how='left')
     test_meta = test_meta.merge(labels, on=['file_name'], how='left')
