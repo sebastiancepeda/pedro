@@ -6,12 +6,12 @@ import pandas as pd
 
 
 def set_index(meta):
-    index = meta.image_name.unique()
+    index = meta.file_name.unique()
     index = pd.DataFrame(data={
-        'image_name': index,
+        'file_name': index,
         'idx': range(len(index)),
     })
-    meta = meta.merge(index, on=['image_name'], how='left')
+    meta = meta.merge(index, on=['file_name'], how='left')
     return meta
 
 

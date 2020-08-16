@@ -5,7 +5,7 @@ import json
 import pandas as pd
 
 
-def get_image_polygons(row):
+def __get_image_polygons(row):
     regions = row['regions']
     vals = []
     for region in regions.values():
@@ -35,7 +35,7 @@ def get_labels_plates_text(file):
     with open(file) as json_file:
         data = json.load(json_file)
     data = list(data.values())
-    data = [get_image_polygons(row) for row in data]
+    data = [__get_image_polygons(row) for row in data]
     data = pd.concat(data, axis=0).reset_index(drop=True)
     int_cols = ['x0', 'y0', 'x1', 'y1', 'x2', 'y2', 'x3', 'y3']
     for c in int_cols:

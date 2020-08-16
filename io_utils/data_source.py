@@ -1,6 +1,7 @@
 import cv2
 import numpy as np
 import pandas as pd
+import glob
 
 from cv.image_processing import get_xs
 from io_utils.read_polygons_json import get_labels_plates_text
@@ -21,9 +22,8 @@ def load_image(im_data, folder, dsize, in_channels):
 
 def load_image_label(im_data, folder, dsize, in_channels, alphabet):
     dsize_cv2 = (dsize[1], dsize[0])
-    image = im_data.image.values[0]
+    im_file = im_data.file_path.values[0]
     # Image load
-    im_file = f"{folder}/{image}"
     im = cv2.imread(im_file)
     assert im is not None, f"Error while reading image: {im_file}"
     im = cv2.cvtColor(im, cv2.COLOR_BGR2GRAY)
@@ -63,12 +63,12 @@ def get_labels(alphabet, dsize_cv2, im_shape, row):
 
 def get_image_label(folder, metadata, dsize, in_channels, out_channels, params):
     alphabet = params['alphabet']
-    image_name_list = metadata.image_name.unique()
+    image_name_list = metadata.file_name.unique()
     set_size = len(image_name_list)
     x = np.zeros((set_size, dsize[0], dsize[1], in_channels))
     y = np.zeros((set_size, dsize[0], dsize[1], out_channels))
     for image_name in image_name_list:
-        image_data = metadata.loc[metadata.image_name == image_name]
+        image_data = metadata.loc[metadata.file_name == image_name]
         idx = image_data.idx.values[0]
         im, gt = load_image_label(image_data, folder, dsize, in_channels, alphabet)
         if in_channels == 3:
@@ -189,19 +189,24 @@ def get_plates_bounding_metadata(params):
     return metadata
 
 
-def get_plates_text_area_metadata(params):
-    meta = params['metadata']
-    labels = params['labels']
-    meta = pd.read_csv(meta)
-    labels = get_labels_plates_text(labels)
-    labels = labels.assign(image_name=labels.filename)
-    meta = meta.assign(image_name=meta.image)
-    labels.image_name = labels.image_name.str.split('.').str[0]
-    labels.image_name = labels.image_name.str.split('_').str[-1]
-    meta.image_name = meta.image_name.str.split('.').str[0]
-    meta.image_name = meta.image_name.str.split('_').str[-1]
-    meta = meta.merge(labels, on=['image_name'], how='left')
-    return meta
+def get_filenames(path):
+    files = glob.glob(f"{path}/*.jpg")
+    files = pd.Series(files)
+    files = files.rename('file_path')
+    files = files.to_frame()
+    file_name = files.file_path.str.split('/').str[-1]
+    file_name = file_name.str.split('.').str[0]
+    files = files.assign(file_name=file_name)
+    return files
+
+
+def get_segmentation_labels(path):
+    labels = glob.glob(f"{path}/*.json")
+    labels = [get_labels_plates_text(label) for label in labels]
+    labels = pd.concat(labels, axis=0)
+    labels = labels.rename(columns={'filename': 'file_name'})
+    labels.file_name = labels.file_name.str.split('.').str[0]
+    return labels
 
 
 def get_plates_text_metadata(params):
