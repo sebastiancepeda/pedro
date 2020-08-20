@@ -9,7 +9,7 @@ from io_utils.read_polygons_json import get_labels_plates_text
 
 def load_image(im_data, folder, dsize, in_channels):
     dsize_cv2 = (dsize[1], dsize[0])
-    image = im_data.image
+    image = im_data.file_name
     im_file = f"{folder}/{image}"
     im = cv2.imread(im_file)
     assert im is not None, f"Error while reading image: {im_file}"
@@ -110,7 +110,13 @@ def get_image_text_label(folder, metadata, dsize, in_channels, out_channels, alp
             label = plate_text[idx_letter]
             label_idx = alphabet[label]
             y[idx, 0, idx_letter, label_idx] = 1.0
-        im = load_image(row, folder, dsize, in_channels)
+        im = np.zeros((dsize[0], dsize[1], in_channels))
+        if in_channels == 1:
+            im = np.zeros((dsize[0], dsize[1]))
+        try:
+            im = load_image(row, folder, dsize, in_channels)
+        except Exception as e:
+            pass
         if in_channels == 3:
             x[idx, :, :, :] = im[:, :, 0:in_channels]
         else:
@@ -216,7 +222,7 @@ def get_segmentation_labels(path):
 def get_plates_text_metadata(params):
     metadata = params['metadata']
     metadata = pd.read_csv(metadata)
-    metadata = metadata.assign(image_name=metadata.image)
+    metadata = metadata.assign(image_name=metadata.file_name)
     metadata.image_name = metadata.image_name.str.split('.').str[0]
     metadata.image_name = metadata.image_name.str.split('_').str[-1]
     return metadata

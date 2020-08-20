@@ -1,11 +1,15 @@
 from loguru import logger
 
 from cv.tensorflow_models.tensorflow_utils import train_model_gen
-from cv.tensorflow_models.unet2text import (get_model_definition,
-                                            normalize_image_shape)
-from io_utils.data_source import (get_plates_text_metadata,
-                                  get_image_text_label,
-                                  get_image_text_label_sim)
+from cv.tensorflow_models.unet2text import (
+    get_model_definition,
+    normalize_image_shape
+)
+from io_utils.data_source import (
+    get_plates_text_metadata,
+    get_image_text_label,
+    get_image_text_label_sim
+)
 from io_utils.image_text_label_generator import ImageTextLabelGenerator
 from io_utils.utils import set_index
 
@@ -29,7 +33,7 @@ def get_params():
         'dsize': dsize,
         'model_folder': f'{output_folder}/model',
         'model_file': f'{output_folder}/model/best_model.h5',
-        'metadata': f"{input_folder}/files.csv",
+        'metadata': f"{path}/plates/input/labels/ocr/files.csv",
         'alphabet': alphabet,
         'model_params': {
             'img_height': dsize[0],
@@ -50,8 +54,8 @@ def train_ocr_model(params):
     in_channels = model_params['in_channels']
     out_channels = model_params['out_channels']
     metadata = get_plates_text_metadata(params)
-    metadata.image = 'plates_' + metadata.image
-    metadata.image = metadata.image.str.split('.').str[0] + '.png'
+    metadata.file_name = 'plate_' + metadata.file_name
+    metadata.file_name = metadata.file_name.str.split('.').str[0] + '.png'
     train_meta = metadata.query("set == 'train'")
     test_meta = metadata.query("set == 'test'")
     train_meta = set_index(train_meta)
@@ -67,8 +71,10 @@ def train_ocr_model(params):
         'in_channels': in_channels, 'out_channels': out_channels,
         'alphabet': alphabet
     }
-    data_train = ImageTextLabelGenerator(get_image_text_label, preprocess_input, f_train_params)
-    data_val = ImageTextLabelGenerator(get_image_text_label, preprocess_input, f_test_params)
+    data_train = ImageTextLabelGenerator(get_image_text_label,
+                                         preprocess_input, f_train_params)
+    data_val = ImageTextLabelGenerator(get_image_text_label, preprocess_input,
+                                       f_test_params)
     train_model_gen(data_train, data_val, model, params, logger)
 
 
@@ -95,8 +101,10 @@ def train_ocr_model_sim(params):
         'in_channels': in_channels, 'out_channels': out_channels,
         'alphabet': alphabet
     }
-    data_train = ImageTextLabelGenerator(get_image_text_label_sim, preprocess_input, f_train_params)
-    data_val = ImageTextLabelGenerator(get_image_text_label, preprocess_input, f_test_params)
+    data_train = ImageTextLabelGenerator(get_image_text_label_sim,
+                                         preprocess_input, f_train_params)
+    data_val = ImageTextLabelGenerator(get_image_text_label, preprocess_input,
+                                       f_test_params)
     train_model_gen(data_train, data_val, model, params, logger)
 
 
