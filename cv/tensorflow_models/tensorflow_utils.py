@@ -45,8 +45,8 @@ def train_model_gen(data_train, data_val, model, params, logger):
         keras.callbacks.ModelCheckpoint(
             model_file,
             save_weights_only=True,
-            save_best_only=False,
-            # save_best_only=True,
+            # save_best_only=False,
+            save_best_only=True,
             mode='min'),
     ]
     if not os.path.exists(model_folder):
