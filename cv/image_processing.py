@@ -168,7 +168,7 @@ def get_theta(x0, x3):
 
 def print_images(images, metadata, folder, name, logger):
     logger.info(f"Saving {name} images")
-    for image_filename, im in zip(metadata.image, images):
+    for image_filename, im in zip(metadata.file_name, images):
         image_name = image_filename.split('.')[0]
         save_image(im, f"{folder}/{name}_{image_name}.png")
 

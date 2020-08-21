@@ -81,7 +81,7 @@ def get_model_definition(img_height, img_width, in_channels, out_channels):
         'kernel_initializer': 'he_normal',
         'padding': 'same',
     }
-    h_dim = 100
+    # h_dim = 100
     x = Conv2D(h_dim, kernel_size=(3, 3), **kwargs_conv2d)(u1)
     x = MaxPooling2D((2, 2))(x)
     x = Conv2D(h_dim, kernel_size=(3, 3), **kwargs_conv2d)(x)

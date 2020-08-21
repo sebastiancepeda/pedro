@@ -32,8 +32,7 @@ def get_params():
         'dsize': dsize,
         'model_folder': f'{output_folder}/model',
         'model_file': f'{output_folder}/model/best_model.h5',
-        # 'labels': f"{input_folder}/labels_plates_ocr_1.json",
-        'metadata': f"{input_folder}/files.csv",
+        'metadata': f"{path}/plates/input/labels/ocr/files.csv",
         'alphabet': alphabet,
         'model_params': {
             'img_height': dsize[0],
@@ -65,8 +64,8 @@ def ocr_plates(params, logger):
     model.load_weights(model_file)
     logger.info("Loading data")
     meta = get_plates_text_metadata(params)
-    meta.image = 'plates_' + meta.image
-    meta.image = meta.image.str.split('.').str[0]+'.png'
+    meta.file_name = 'plate_' + meta.file_name
+    meta.file_name = meta.file_name.str.split('.').str[0]+'.png'
     meta = set_index(meta)
     images, _ = get_image_text_label(input_folder, meta, dsize, in_channels, out_channels, alphabet)
     images = [pred2im(images, dsize, idx, in_channels) for idx in range(len(images))]
