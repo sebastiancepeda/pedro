@@ -81,19 +81,21 @@ def get_model_definition(img_height, img_width, in_channels, out_channels):
         'kernel_initializer': 'he_normal',
         'padding': 'same',
     }
-    # h_dim = 100
-    x = Conv2D(h_dim, kernel_size=(3, 3), **kwargs_conv2d)(u1)
+    k_size = (5, 5)
+    x = Conv2D(h_dim, kernel_size=k_size, **kwargs_conv2d)(u1)
     x = MaxPooling2D((2, 2))(x)
-    x = Conv2D(h_dim, kernel_size=(3, 3), **kwargs_conv2d)(x)
+    x = Conv2D(h_dim, kernel_size=k_size, **kwargs_conv2d)(x)
     x = MaxPooling2D((2, 2))(x)
-    x = Conv2D(h_dim, kernel_size=(3, 3), **kwargs_conv2d)(x)
+    x = Conv2D(h_dim, kernel_size=k_size, **kwargs_conv2d)(x)
     x = MaxPooling2D((2, 2))(x)
-    x = Conv2D(h_dim, kernel_size=(3, 3), **kwargs_conv2d)(x)
+    x = Conv2D(h_dim, kernel_size=k_size, **kwargs_conv2d)(x)
     x = MaxPooling2D((2, 2))(x)
-    x = Conv2D(h_dim, kernel_size=(3, 3), **kwargs_conv2d)(x)
-    x = MaxPooling2D((4, 1))(x)
-    x = Conv2D(h_dim, kernel_size=(1, 3), **kwargs_conv2d)(x)
-    outputs = Conv2D(out_channels, (1, 1), activation='sigmoid')(x)
+    x = Conv2D(h_dim, kernel_size=k_size, **kwargs_conv2d)(x)
+    x = MaxPooling2D((2, 1))(x)
+    x = Conv2D(h_dim, kernel_size=k_size, **kwargs_conv2d)(x)
+    x = MaxPooling2D((2, 1))(x)
+    x = Conv2D(h_dim, kernel_size=k_size, **kwargs_conv2d)(x)
+    outputs = Conv2D(out_channels, kernel_size=(1, 1), activation='sigmoid')(x)
     # Model compilation
     model = Model(inputs=[inputs], outputs=[outputs])
     model.compile(optimizer='adam',
