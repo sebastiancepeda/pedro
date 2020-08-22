@@ -1,7 +1,7 @@
 from loguru import logger
 
 from cv.tensorflow_models.tensorflow_utils import train_model_gen
-from cv.tensorflow_models.unet2text import (
+from cv.tensorflow_models.unet2text2 import (
     get_model_definition,
     normalize_image_shape
 )
