@@ -35,19 +35,26 @@ def get_model_definition(img_height, img_width, in_channels, out_channels):
         'kernel_initializer': 'he_normal',
         'padding': 'same',
     }
-    h_dim = 5
+    h_dim = 1000
+    x = Conv2D(h_dim, **kwargs_conv2d)(x)
     x = Conv2D(h_dim, **kwargs_conv2d)(x)
     x = AveragePooling2D((2, 2))(x)
     x = Conv2D(h_dim, **kwargs_conv2d)(x)
-    x = AveragePooling2D((2, 2))(x)
     x = Conv2D(h_dim, **kwargs_conv2d)(x)
     x = AveragePooling2D((2, 2))(x)
     x = Conv2D(h_dim, **kwargs_conv2d)(x)
+    x = Conv2D(h_dim, **kwargs_conv2d)(x)
     x = AveragePooling2D((2, 2))(x)
+    x = Conv2D(h_dim, **kwargs_conv2d)(x)
+    x = Conv2D(h_dim, **kwargs_conv2d)(x)
+    x = AveragePooling2D((2, 2))(x)
+    x = Conv2D(h_dim, **kwargs_conv2d)(x)
     x = Conv2D(h_dim, **kwargs_conv2d)(x)
     x = AveragePooling2D((2, 1))(x)
     x = Conv2D(h_dim, **kwargs_conv2d)(x)
+    x = Conv2D(h_dim, **kwargs_conv2d)(x)
     x = AveragePooling2D((2, 1))(x)
+    x = Conv2D(h_dim, **kwargs_conv2d)(x)
     x = Conv2D(h_dim, **kwargs_conv2d)(x)
     outputs = Conv2D(out_channels, kernel_size=(1, 1), activation='sigmoid')(x)
     # Model compilation

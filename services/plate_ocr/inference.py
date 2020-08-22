@@ -7,7 +7,7 @@ from skimage.util import img_as_ubyte
 from cv.image_processing import (
     pred2im, print_images
 )
-from cv.tensorflow_models.unet2text import (
+from cv.tensorflow_models.unet2text2 import (
     get_model_definition, normalize_image_shape)
 from io_utils.data_source import (
     get_image_text_label, get_plates_text_metadata)
