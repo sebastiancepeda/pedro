@@ -1,6 +1,7 @@
 import cv2
 import numpy as np
 from loguru import logger
+import nltk
 import skimage.transform
 from skimage.util import img_as_ubyte
 
@@ -83,8 +84,12 @@ def ocr_plates(params, logger):
         y = y.flatten().tolist()
         text_pred = [inv_alphabet[idx] for idx in y]
         text_pred = ''.join(text_pred)
-        logger.info(f"Text {im_name: <7}: {text_pred.upper()} - {text}")
+        text_pred = text_pred.upper().strip()
+        # logger.info(f"Text {im_name: <7}: {text_pred.upper()} - {text}")
         texts.append(text_pred)
+    meta['text_pred'] = texts
+    meta["edit_distance"] = meta.loc[:, ["plate", "text_pred"]].apply(lambda row: nltk.edit_distance(*row), axis=1)
+    meta.to_csv(f"{out_folder}/results.csv")
     font = cv2.FONT_HERSHEY_TRIPLEX
     clr = (0, 255, 0)
     pos = (30, 30)
@@ -92,11 +97,10 @@ def ocr_plates(params, logger):
     images = [cv2.cvtColor(im, cv2.COLOR_GRAY2RGB) for im in images]
     images = [cv2.putText(im, txt, pos, font, 1, clr, 2, line) for im, txt in zip(images, texts)]
     print_images(images, meta, out_folder, "images_text", logger)
-
-    afine_tf = skimage.transform.AffineTransform(shear=0.1)
-    images = [skimage.transform.warp(im, inverse_map=afine_tf) for im in images]
-    images = [img_as_ubyte(im) for im in images]
-    print_images(images, meta, out_folder, "images_text_warp", logger)
+    # afine_tf = skimage.transform.AffineTransform(shear=0.1)
+    # images = [skimage.transform.warp(im, inverse_map=afine_tf) for im in images]
+    # images = [img_as_ubyte(im) for im in images]
+    # print_images(images, meta, out_folder, "images_text_warp", logger)
 
 
 if __name__ == "__main__":
