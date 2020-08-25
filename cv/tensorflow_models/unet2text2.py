@@ -30,12 +30,12 @@ def get_model_definition(img_height, img_width, in_channels, out_channels):
     inputs = Input((img_height, img_width, in_channels))
     x = Lambda(lambda aux: aux / 255)(inputs)
     kwargs_conv2d = {
-        'kernel_size': (7, 7),
+        'kernel_size': (3, 3),
         'activation': 'relu',
         'kernel_initializer': 'he_normal',
         'padding': 'same',
     }
-    hdim = 100
+    hdim = 50
     x = Conv2D(hdim, **kwargs_conv2d)(x)
     x = Conv2D(hdim, **kwargs_conv2d)(x)
     x = Conv2D(hdim, **kwargs_conv2d)(x)
