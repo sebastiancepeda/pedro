@@ -4,10 +4,15 @@
 """
 
 from tensorflow.keras import Model
+import tensorflow as tf
 from tensorflow.keras.layers import (
-    Conv2D, Conv2DTranspose,
-    Dropout, Lambda, Input,
-    AveragePooling2D, concatenate,
+    Conv2D,
+    Conv2DTranspose,
+    Dropout,
+    Lambda,
+    Input,
+    # AveragePooling2D,
+    # concatenate,
 )
 
 
@@ -23,10 +28,10 @@ def normalize_image_shape(height, width):
 
 
 def get_model_definition(img_height, img_width, in_channels, out_channels):
-    base = (2 ** 4)
+    base = (2 ** 4) + 1
     msg = "{actual} not multiple of " + str(base)
-    assert img_height % base == 0, msg.format(actual=img_height)
-    assert img_width % base == 0, msg.format(actual=img_width)
+    # assert img_height % base == 0, msg.format(actual=img_height)
+    # assert img_width % base == 0, msg.format(actual=img_width)
     inputs = Input((img_height, img_width, in_channels))
     x = Lambda(lambda aux: aux / 255)(inputs)
     kwargs_conv2d = {
@@ -36,35 +41,47 @@ def get_model_definition(img_height, img_width, in_channels, out_channels):
         'padding': 'same',
     }
     hdim = 50
+    print(x.shape)
     x = Conv2D(hdim, **kwargs_conv2d)(x)
     x = Conv2D(hdim, **kwargs_conv2d)(x)
     x = Conv2D(hdim, **kwargs_conv2d)(x)
-    x = AveragePooling2D((2, 2))(x)
+    shape = (x.shape[1] // 4, x.shape[2] // 4)
+    x = tf.keras.layers.Cropping2D(cropping=shape)(x)
+    print(x.shape)
     x = Conv2D(hdim, **kwargs_conv2d)(x)
     x = Conv2D(hdim, **kwargs_conv2d)(x)
     x = Conv2D(hdim, **kwargs_conv2d)(x)
-    x = AveragePooling2D((2, 2))(x)
+    shape = (x.shape[1] // 4, x.shape[2] // 4)
+    x = tf.keras.layers.Cropping2D(cropping=shape)(x)
+    print(x.shape)
     x = Conv2D(hdim, **kwargs_conv2d)(x)
     x = Conv2D(hdim, **kwargs_conv2d)(x)
     x = Conv2D(hdim, **kwargs_conv2d)(x)
-    x = AveragePooling2D((2, 2))(x)
+    shape = (x.shape[1] // 4, x.shape[2] // 4)
+    x = tf.keras.layers.Cropping2D(cropping=shape)(x)
+    print(x.shape)
     x = Conv2D(hdim, **kwargs_conv2d)(x)
     x = Conv2D(hdim, **kwargs_conv2d)(x)
     x = Conv2D(hdim, **kwargs_conv2d)(x)
-    x = AveragePooling2D((2, 2))(x)
+    shape = (x.shape[1] // 4, x.shape[2] // 4)
+    x = tf.keras.layers.Cropping2D(cropping=shape)(x)
+    print(x.shape)
     x = Conv2D(hdim, **kwargs_conv2d)(x)
     x = Conv2D(hdim, **kwargs_conv2d)(x)
     x = Conv2D(hdim, **kwargs_conv2d)(x)
-    x = AveragePooling2D((2, 1))(x)
+    shape = (x.shape[1] // 4, 0)
+    x = tf.keras.layers.Cropping2D(cropping=shape)(x)
+    print(x.shape)
     x = Conv2D(hdim, **kwargs_conv2d)(x)
     x = Conv2D(hdim, **kwargs_conv2d)(x)
     x = Conv2D(hdim, **kwargs_conv2d)(x)
-    x = AveragePooling2D((2, 1))(x)
+    shape = (1, 1)
+    x = tf.keras.layers.Cropping2D(cropping=shape)(x)
+    print(x.shape)
     x = Conv2D(hdim, **kwargs_conv2d)(x)
     x = Conv2D(hdim, **kwargs_conv2d)(x)
     x = Conv2D(hdim, **kwargs_conv2d)(x)
-    outputs = Conv2D(
-        out_channels, kernel_size=(1, 1), activation='sigmoid')(x)
+    outputs = Conv2D(out_channels, kernel_size=(1, 1), activation='sigmoid')(x)
     # Model compilation
     model = Model(inputs=[inputs], outputs=[outputs])
     model.compile(optimizer='adam',
