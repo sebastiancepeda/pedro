@@ -21,8 +21,8 @@ def get_params():
     width = 200
     height = 50
     height, width = normalize_image_shape(height, width)
-    height = height + 1
-    width = width + 1
+    #height = height + 1
+    #width = width + 1
     dsize = (height, width)
     alphabet = ' abcdefghijklmnopqrstuvwxyz0123456789'
     alphabet = {char: idx for char, idx in zip(alphabet, range(len(alphabet)))}
