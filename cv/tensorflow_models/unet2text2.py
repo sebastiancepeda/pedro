@@ -41,16 +41,13 @@ def get_model_definition(img_height, img_width, in_channels, out_channels):
         'padding': 'same',
     }
     hdim = 100
+    depth = 50
+    
+    print(x.shape)
+    for d in range(depth):
+        x = Conv2D(hdim, **kwargs_conv2d)(x)
 
-    print(x.shape)
-    x = Conv2D(hdim, **kwargs_conv2d)(x)
-    x = Conv2D(hdim, **kwargs_conv2d)(x)
-    x = Conv2D(hdim, **kwargs_conv2d)(x)
-    x = tf.keras.layers.Cropping2D(cropping=(30, 70))(x)
-    print(x.shape)
-    x = Conv2D(hdim, **kwargs_conv2d)(x)
-    x = Conv2D(hdim, **kwargs_conv2d)(x)
-    x = tf.keras.layers.Cropping2D(cropping=(2, 28))(x)
+    x = tf.keras.layers.Cropping2D(cropping=(32, 98))(x)
     print(x.shape)
     x = Conv2D(hdim, **kwargs_conv2d)(x)
 
