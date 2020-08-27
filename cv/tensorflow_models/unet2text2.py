@@ -35,52 +35,25 @@ def get_model_definition(img_height, img_width, in_channels, out_channels):
     inputs = Input((img_height, img_width, in_channels))
     x = Lambda(lambda aux: aux / 255)(inputs)
     kwargs_conv2d = {
-        'kernel_size': (3, 3),
+        'kernel_size': (5, 5),
         'activation': 'relu',
         'kernel_initializer': 'he_normal',
         'padding': 'same',
     }
-    hdim = 50
+    hdim = 100
+
     print(x.shape)
     x = Conv2D(hdim, **kwargs_conv2d)(x)
     x = Conv2D(hdim, **kwargs_conv2d)(x)
     x = Conv2D(hdim, **kwargs_conv2d)(x)
-    shape = (x.shape[1] // 4, x.shape[2] // 4)
-    x = tf.keras.layers.Cropping2D(cropping=shape)(x)
+    x = tf.keras.layers.Cropping2D(cropping=(30, 70))(x)
     print(x.shape)
     x = Conv2D(hdim, **kwargs_conv2d)(x)
     x = Conv2D(hdim, **kwargs_conv2d)(x)
-    x = Conv2D(hdim, **kwargs_conv2d)(x)
-    shape = (x.shape[1] // 4, x.shape[2] // 4)
-    x = tf.keras.layers.Cropping2D(cropping=shape)(x)
+    x = tf.keras.layers.Cropping2D(cropping=(2, 28))(x)
     print(x.shape)
     x = Conv2D(hdim, **kwargs_conv2d)(x)
-    x = Conv2D(hdim, **kwargs_conv2d)(x)
-    x = Conv2D(hdim, **kwargs_conv2d)(x)
-    shape = (x.shape[1] // 4, x.shape[2] // 4)
-    x = tf.keras.layers.Cropping2D(cropping=shape)(x)
-    print(x.shape)
-    x = Conv2D(hdim, **kwargs_conv2d)(x)
-    x = Conv2D(hdim, **kwargs_conv2d)(x)
-    x = Conv2D(hdim, **kwargs_conv2d)(x)
-    shape = (x.shape[1] // 4, x.shape[2] // 4)
-    x = tf.keras.layers.Cropping2D(cropping=shape)(x)
-    print(x.shape)
-    x = Conv2D(hdim, **kwargs_conv2d)(x)
-    x = Conv2D(hdim, **kwargs_conv2d)(x)
-    x = Conv2D(hdim, **kwargs_conv2d)(x)
-    shape = (x.shape[1] // 4, 0)
-    x = tf.keras.layers.Cropping2D(cropping=shape)(x)
-    print(x.shape)
-    x = Conv2D(hdim, **kwargs_conv2d)(x)
-    x = Conv2D(hdim, **kwargs_conv2d)(x)
-    x = Conv2D(hdim, **kwargs_conv2d)(x)
-    shape = (1, 1)
-    x = tf.keras.layers.Cropping2D(cropping=shape)(x)
-    print(x.shape)
-    x = Conv2D(hdim, **kwargs_conv2d)(x)
-    x = Conv2D(hdim, **kwargs_conv2d)(x)
-    x = Conv2D(hdim, **kwargs_conv2d)(x)
+
     outputs = Conv2D(out_channels, kernel_size=(1, 1), activation='sigmoid')(x)
     # Model compilation
     model = Model(inputs=[inputs], outputs=[outputs])

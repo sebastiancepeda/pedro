@@ -2,8 +2,6 @@ import cv2
 import numpy as np
 from loguru import logger
 import nltk
-import skimage.transform
-from skimage.util import img_as_ubyte
 
 from cv.image_processing import (
     pred2im, print_images
@@ -22,6 +20,8 @@ def get_params():
     width = 200
     height = 50
     height, width = normalize_image_shape(height, width)
+    height = height + 1
+    width = width + 1
     dsize = (height, width)
     alphabet = ' abcdefghijklmnopqrstuvwxyz0123456789'
     alphabet = {char: idx for char, idx in zip(alphabet, range(len(alphabet)))}
@@ -68,24 +68,24 @@ def ocr_plates(params, logger):
     meta.file_name = 'plate_' + meta.file_name
     meta.file_name = meta.file_name.str.split('.').str[0]+'.png'
     meta = set_index(meta)
-    images, _ = get_image_text_label(input_folder, meta, dsize, in_channels, out_channels, alphabet)
-    images = [pred2im(images, dsize, idx, in_channels) for idx in range(len(images))]
+    x, _ = get_image_text_label(input_folder, meta, dsize, in_channels, out_channels, alphabet)
+    images = map(lambda idx: pred2im(x, dsize, idx, in_channels), range(len(x)))
     logger.info("Pre process input")
-    images_pred = [preprocess_input(im) for im in images]
+    images_pred = map(preprocess_input, images)
     logger.info("Inference")
-    images_pred = [im.reshape(1, dsize[0], dsize[1], in_channels) for im in images_pred]
-    images_pred = [model.predict(im) for im in images_pred]
-    images_pred = [np.argmax(im, axis=3) for im in images_pred]
-    print_images(images, meta, out_folder, "images_text", logger)
+    images_pred = map(lambda im: im.reshape(1, dsize[0], dsize[1], in_channels), images_pred)
+    images_pred = map(model.predict, images_pred)
+    images_pred = map(lambda im: np.argmax(im, axis=3), images_pred)
     alphabet = params['alphabet']
     inv_alphabet = {alphabet[char]: char for char in alphabet.keys()}
+    logger.info("Getting texts")
     texts = []
     for y, im_name, text in zip(images_pred, meta.image_name, meta.plate):
         y = y.flatten().tolist()
         text_pred = [inv_alphabet[idx] for idx in y]
         text_pred = ''.join(text_pred)
         text_pred = text_pred.upper().strip()
-        # logger.info(f"Text {im_name: <7}: {text_pred.upper()} - {text}")
+        logger.info(f"Text {im_name: <7}: {text_pred.upper()} - {text}")
         texts.append(text_pred)
     meta['text_pred'] = texts
     meta["edit_distance"] = meta.loc[:, ["plate", "text_pred"]].apply(lambda row: nltk.edit_distance(*row), axis=1)
@@ -97,10 +97,6 @@ def ocr_plates(params, logger):
     images = [cv2.cvtColor(im, cv2.COLOR_GRAY2RGB) for im in images]
     images = [cv2.putText(im, txt, pos, font, 1, clr, 2, line) for im, txt in zip(images, texts)]
     print_images(images, meta, out_folder, "images_text", logger)
-    # afine_tf = skimage.transform.AffineTransform(shear=0.1)
-    # images = [skimage.transform.warp(im, inverse_map=afine_tf) for im in images]
-    # images = [img_as_ubyte(im) for im in images]
-    # print_images(images, meta, out_folder, "images_text_warp", logger)
 
 
 if __name__ == "__main__":
