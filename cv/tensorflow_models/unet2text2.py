@@ -42,7 +42,7 @@ def get_model_definition(img_height, img_width, in_channels, out_channels):
     }
     hdim = 100
     depth = 50
-    
+
     print(x.shape)
     for d in range(depth):
         x = Conv2D(hdim, **kwargs_conv2d)(x)
