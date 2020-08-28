@@ -36,31 +36,25 @@ def get_model_definition(img_height, img_width, in_channels, out_channels):
         'kernel_initializer': 'he_normal',
         'padding': 'same',
     }
-    k_size = (21, 21)
+    side = 1
+    k_size = (1+2*side,)*2
     h_dim = 10
-    x = Conv2D(h_dim, kernel_size=k_size, **kwargs_conv2d)(x)
     x = Conv2D(h_dim, kernel_size=k_size, **kwargs_conv2d)(x)
     x = MaxPooling2D((2, 2))(x)
     # x = tf.keras.layers.Dense(100)(x)
     x = Conv2D(h_dim, kernel_size=k_size, **kwargs_conv2d)(x)
+    x = MaxPooling2D((2, 2))(x)
     x = Conv2D(h_dim, kernel_size=k_size, **kwargs_conv2d)(x)
     x = MaxPooling2D((2, 2))(x)
     x = Conv2D(h_dim, kernel_size=k_size, **kwargs_conv2d)(x)
-    x = Conv2D(h_dim, kernel_size=k_size, **kwargs_conv2d)(x)
     x = MaxPooling2D((2, 2))(x)
-    x = Conv2D(h_dim, kernel_size=k_size, **kwargs_conv2d)(x)
-    x = Conv2D(h_dim, kernel_size=k_size, **kwargs_conv2d)(x)
-    x = MaxPooling2D((2, 2))(x)
-    x = Conv2D(h_dim, kernel_size=k_size, **kwargs_conv2d)(x)
     x = Conv2D(h_dim, kernel_size=k_size, **kwargs_conv2d)(x)
     x = MaxPooling2D((2, 1))(x)
     x = Conv2D(h_dim, kernel_size=k_size, **kwargs_conv2d)(x)
-    x = Conv2D(h_dim, kernel_size=k_size, **kwargs_conv2d)(x)
     x = MaxPooling2D((2, 1))(x)
-    x = Conv2D(h_dim, kernel_size=k_size, **kwargs_conv2d)(x)
-    x = Conv2D(h_dim, kernel_size=k_size, **kwargs_conv2d)(x)
-    # outputs = Conv2D(out_channels, kernel_size=(1, 1), activation='sigmoid')(x)
-    outputs = Conv2D(out_channels, kernel_size=(1, 1), activation='softmax')(x)
+    x = Conv2D(out_channels, kernel_size=(1, 1), activation='relu', padding='same')(x)
+    outputs = tf.keras.layers.Softmax(axis=3)(x)
+    print(outputs.shape)
     # Model compilation
     model = Model(inputs=[inputs], outputs=[outputs])
     model.compile(optimizer='adam',
