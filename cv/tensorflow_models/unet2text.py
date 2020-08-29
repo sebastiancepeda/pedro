@@ -3,10 +3,11 @@
 @email: sebastian.cepeda.fuentealba@gmail.com
 """
 
+import tensorflow as tf
 from tensorflow.keras import Model
 from tensorflow.keras.layers import (
     Conv2D, Conv2DTranspose,
-    Dropout, Lambda, Input,
+    Lambda, Input,
     MaxPooling2D, concatenate,
 )
 
@@ -31,7 +32,7 @@ def get_model_definition(img_height, img_width, in_channels, out_channels):
     pre_processing = Lambda(lambda x: x / 255)(inputs)
     kwargs_conv2d = {
         'kernel_size': (3, 3),
-        'activation': 'relu',
+        'activation': tf.keras.layers.LeakyReLU(alpha=0.1),
         'kernel_initializer': 'he_normal',
         'padding': 'same',
     }
@@ -77,12 +78,12 @@ def get_model_definition(img_height, img_width, in_channels, out_channels):
     u1 = Conv2D(outs[1], **kwargs_conv2d)(u1)
     # Downward
     kwargs_conv2d = {
-        'activation': 'relu',
+        'activation': tf.keras.layers.LeakyReLU(alpha=0.1),  # 'relu',
         'kernel_initializer': 'he_normal',
         'padding': 'same',
-        'kernel_regularizer': 'l1',
+        'kernel_regularizer': tf.keras.regularizers.l1(0.001),  # 'l1',
     }
-    k_size = (3,)*2
+    k_size = (3,) * 2
     x = Conv2D(h_dim, kernel_size=k_size, **kwargs_conv2d)(u1)
     x = MaxPooling2D((2, 2))(x)
     x = Conv2D(h_dim, kernel_size=k_size, **kwargs_conv2d)(x)
