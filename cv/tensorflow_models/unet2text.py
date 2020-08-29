@@ -35,7 +35,7 @@ def get_model_definition(img_height, img_width, in_channels, out_channels):
         'kernel_initializer': 'he_normal',
         'padding': 'same',
     }
-    h_dim = 50  # 100
+    h_dim = 10  # 100
     outs = {
         1: h_dim,  # 64
         2: h_dim,
@@ -80,34 +80,21 @@ def get_model_definition(img_height, img_width, in_channels, out_channels):
         'activation': 'relu',
         'kernel_initializer': 'he_normal',
         'padding': 'same',
+        'kernel_regularizer': 'l1',
     }
-    k_size = (7, 7)
-    x = Conv2D(h_dim, kernel_size=k_size, **kwargs_conv2d)(u1)
-    x = Conv2D(h_dim, kernel_size=k_size, **kwargs_conv2d)(u1)
+    k_size = (3,)*2
     x = Conv2D(h_dim, kernel_size=k_size, **kwargs_conv2d)(u1)
     x = MaxPooling2D((2, 2))(x)
     x = Conv2D(h_dim, kernel_size=k_size, **kwargs_conv2d)(x)
-    x = Conv2D(h_dim, kernel_size=k_size, **kwargs_conv2d)(x)
+    x = MaxPooling2D((2, 2))(x)
     x = Conv2D(h_dim, kernel_size=k_size, **kwargs_conv2d)(x)
     x = MaxPooling2D((2, 2))(x)
     x = Conv2D(h_dim, kernel_size=k_size, **kwargs_conv2d)(x)
-    x = Conv2D(h_dim, kernel_size=k_size, **kwargs_conv2d)(x)
-    x = Conv2D(h_dim, kernel_size=k_size, **kwargs_conv2d)(x)
     x = MaxPooling2D((2, 2))(x)
-    x = Conv2D(h_dim, kernel_size=k_size, **kwargs_conv2d)(x)
-    x = Conv2D(h_dim, kernel_size=k_size, **kwargs_conv2d)(x)
-    x = Conv2D(h_dim, kernel_size=k_size, **kwargs_conv2d)(x)
-    x = MaxPooling2D((2, 2))(x)
-    x = Conv2D(h_dim, kernel_size=k_size, **kwargs_conv2d)(x)
-    x = Conv2D(h_dim, kernel_size=k_size, **kwargs_conv2d)(x)
     x = Conv2D(h_dim, kernel_size=k_size, **kwargs_conv2d)(x)
     x = MaxPooling2D((2, 1))(x)
     x = Conv2D(h_dim, kernel_size=k_size, **kwargs_conv2d)(x)
-    x = Conv2D(h_dim, kernel_size=k_size, **kwargs_conv2d)(x)
-    x = Conv2D(h_dim, kernel_size=k_size, **kwargs_conv2d)(x)
     x = MaxPooling2D((2, 1))(x)
-    x = Conv2D(h_dim, kernel_size=k_size, **kwargs_conv2d)(x)
-    x = Conv2D(h_dim, kernel_size=k_size, **kwargs_conv2d)(x)
     x = Conv2D(h_dim, kernel_size=k_size, **kwargs_conv2d)(x)
     outputs = Conv2D(out_channels, kernel_size=(1, 1), activation='sigmoid')(x)
     # Model compilation
