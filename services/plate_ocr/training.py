@@ -1,7 +1,7 @@
 from loguru import logger
 
 from cv.tensorflow_models.tensorflow_utils import train_model_gen
-from cv.tensorflow_models.unet2text import (
+from cv.tensorflow_models.unet2text2 import (
     get_model_definition,
     normalize_image_shape
 )
@@ -21,8 +21,8 @@ def get_params():
     width = 200
     height = 50
     height, width = normalize_image_shape(height, width)
-    #height = height + 1
-    #width = width + 1
+    # height = height + 1
+    # width = width + 1
     dsize = (height, width)
     alphabet = ' abcdefghijklmnopqrstuvwxyz0123456789'
     alphabet = {char: idx for char, idx in zip(alphabet, range(len(alphabet)))}
