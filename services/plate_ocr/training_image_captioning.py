@@ -80,7 +80,6 @@ def train_ocr_model(params):
         """
         Reset of the hidden state for each batch
         """
-        print(target.numpy())
         batch_size = target.shape[0]
         sentence_len = target.shape[2]
         hidden = decoder.reset_state(batch_size=batch_size)

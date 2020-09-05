@@ -26,9 +26,9 @@ class RNN_Decoder(tf.keras.Model):
     def call(self, x, features, hidden):
         # defining attention as a separate model
         context_vector, attention_weights = self.attention(features, hidden)
-        # x shape after passing through embedding == (batch_size, 1, embedding_dim)
+        # x shape after embedding == (batch_size, 1, embedding_dim)
         x = self.embedding(x)
-        # x shape after concatenation == (batch_size, 1, embedding_dim + hidden_size)
+        # x shape after concat == (batch_size, 1, embedding_dim + hidden_size)
         # print("x1", x.shape)
         # print("context_vector", context_vector.shape)
         context_vector = tf.reshape(context_vector, [1, context_vector.shape[1]*context_vector.shape[2]])
