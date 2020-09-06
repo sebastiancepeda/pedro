@@ -40,25 +40,21 @@ def train_model_gen(data_train, data_val, model, params, logger):
     epochs = params['epochs']
     model_file = params['model_file']
     model_folder = params['model_folder']
-    #
-    callbacks = [
-        keras.callbacks.ModelCheckpoint(
+    model_checkpoint_callback = keras.callbacks.ModelCheckpoint(
             model_file,
             save_weights_only=True,
             save_best_only=False,
             # save_best_only=True,
-            mode='min'),
-        keras.callbacks.TensorBoard(
-            './graphs',
-            histogram_freq=1,  # Freq compute activation and weight histograms
-            write_graph=True,  # visualize the graph
-            write_grads=True,  # visual gradient histogram
-            write_images=True,  # visualize weights as an image
-            # embeddings_freq=1,
-            # embeddings_layer_names=['...'],
-            update_freq='epoch'
-            # update TensorBoard every epoch
-        )
+            mode='min')
+    tensorboard_callback = keras.callbacks.TensorBoard(
+            log_dir='./graphs', histogram_freq=0, batch_size=32,
+            write_graph=False, write_grads=False, write_images=False,
+            embeddings_freq=0, embeddings_layer_names=None,
+            embeddings_metadata=None, embeddings_data=None,
+            update_freq='epoch')
+    callbacks = [
+        model_checkpoint_callback,
+        tensorboard_callback
     ]
     if not os.path.exists(model_folder):
         os.makedirs(model_folder)

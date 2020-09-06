@@ -37,7 +37,7 @@ def get_model_definition(img_height, img_width, in_channels, out_channels):
         'padding': 'same',
     }
     k_size = (3,)*2
-    h_dim = 30
+    h_dim = 10
     h1 = Conv2D(h_dim, kernel_size=k_size, **kwargs_conv2d)(x)
     h1 = Conv2D(h_dim, kernel_size=k_size, **kwargs_conv2d)(h1)
     h2 = MaxPooling2D((2, 2))(h1)
