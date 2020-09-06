@@ -48,6 +48,17 @@ def train_model_gen(data_train, data_val, model, params, logger):
             save_best_only=False,
             # save_best_only=True,
             mode='min'),
+        keras.callbacks.TensorBoard(
+            './graphs',
+            histogram_freq=1,  # Freq compute activation and weight histograms
+            write_graph=True,  # visualize the graph
+            write_grads=True,  # visual gradient histogram
+            write_images=True,  # visualize weights as an image
+            # embeddings_freq=1,
+            # embeddings_layer_names=['...'],
+            update_freq='epoch'
+            # update TensorBoard every epoch
+        )
     ]
     if not os.path.exists(model_folder):
         os.makedirs(model_folder)

@@ -36,28 +36,58 @@ def get_model_definition(img_height, img_width, in_channels, out_channels):
         'kernel_initializer': 'he_normal',
         'padding': 'same',
     }
-    k_size = (11,)*2
-    h_dim = 100
-    x = Conv2D(h_dim, kernel_size=k_size, **kwargs_conv2d)(x)
-    a = tf.keras.layers.Softmax(axis=1)(x)
-    x = tf.concat([x, a * x], axis=3)
-    x = MaxPooling2D((2, 2))(x)
-    x = Conv2D(h_dim, kernel_size=k_size, **kwargs_conv2d)(x)
-    x = MaxPooling2D((2, 2))(x)
-    x = Conv2D(h_dim, kernel_size=k_size, **kwargs_conv2d)(x)
-    x = MaxPooling2D((2, 2))(x)
-    x = Conv2D(h_dim, kernel_size=k_size, **kwargs_conv2d)(x)
-    x = MaxPooling2D((2, 2))(x)
-    x = Conv2D(h_dim, kernel_size=k_size, **kwargs_conv2d)(x)
-    x = MaxPooling2D((2, 1))(x)
-    x = Conv2D(h_dim, kernel_size=k_size, **kwargs_conv2d)(x)
-    x = MaxPooling2D((2, 1))(x)
-    x = Conv2D(out_channels, kernel_size=(1, 1), **kwargs_conv2d)(x)
-    print(x.shape)
-    # x = tf.keras.layers.Flatten()(x)
-    # x = tf.keras.layers.Dense(481)(x)
-    # x = tf.keras.layers.Reshape((-1, 1, 13, 37))(x)
-    outputs = tf.keras.layers.Softmax(axis=3)(x)
+    k_size = (3,)*2
+    h_dim = 30
+    h1 = Conv2D(h_dim, kernel_size=k_size, **kwargs_conv2d)(x)
+    h1 = Conv2D(h_dim, kernel_size=k_size, **kwargs_conv2d)(h1)
+    h2 = MaxPooling2D((2, 2))(h1)
+    h2 = Conv2D(h_dim*2, kernel_size=k_size, **kwargs_conv2d)(h2)
+    h2 = Conv2D(h_dim*2, kernel_size=k_size, **kwargs_conv2d)(h2)
+    h3 = MaxPooling2D((2, 2))(h2)
+    h3 = Conv2D(h_dim*2, kernel_size=k_size, **kwargs_conv2d)(h3)
+    h3 = Conv2D(h_dim*2, kernel_size=k_size, **kwargs_conv2d)(h3)
+    outputs = []
+    for it in range(13):
+        # First glimpse
+        a1 = Conv2D(h_dim, kernel_size=k_size, **kwargs_conv2d)(x)
+        a1 = Conv2D(h_dim, kernel_size=k_size, **kwargs_conv2d)(a1)
+        a1 = Conv2D(2, kernel_size=k_size, **kwargs_conv2d)(a1)
+        a1 = tf.keras.layers.Softmax(axis=-1)(a1)
+        a1 = a1[:, :, :, 0:1]
+        a1 = tf.tile(a1, multiples=[1, 1, 1, h1.shape[-1]])
+        g1 = tf.concat([h1, a1 * h1], axis=-1)
+        # Second glimpse
+        a2 = Conv2D(h_dim, kernel_size=k_size, **kwargs_conv2d)(g1)
+        a2 = Conv2D(h_dim, kernel_size=k_size, **kwargs_conv2d)(a2)
+        a2 = MaxPooling2D((2, 2))(a2)
+        a2 = Conv2D(h_dim, kernel_size=k_size, **kwargs_conv2d)(a2)
+        a2 = Conv2D(h_dim, kernel_size=k_size, **kwargs_conv2d)(a2)
+        a2 = Conv2D(2, kernel_size=k_size, **kwargs_conv2d)(a2)
+        a2 = tf.keras.layers.Softmax(axis=-1)(a2)
+        a2 = a2[:, :, :, 0:1]
+        a2 = tf.tile(a2, multiples=[1, 1, 1, h2.shape[-1]])
+        g2 = tf.concat([h2, a2 * h2], axis=-1)
+        # Third glimpse
+        a3 = Conv2D(h_dim, kernel_size=k_size, **kwargs_conv2d)(g2)
+        a3 = Conv2D(h_dim, kernel_size=k_size, **kwargs_conv2d)(a3)
+        a3 = MaxPooling2D((2, 2))(a3)
+        a3 = Conv2D(h_dim, kernel_size=k_size, **kwargs_conv2d)(a3)
+        a3 = Conv2D(h_dim, kernel_size=k_size, **kwargs_conv2d)(a3)
+        a3 = Conv2D(2, kernel_size=k_size, **kwargs_conv2d)(a3)
+        a3 = tf.keras.layers.Softmax(axis=-1)(a3)
+        a3 = a3[:, :, :, 0:1]
+        a3 = tf.tile(a3, multiples=[1, 1, 1, h3.shape[-1]])
+        g3 = tf.concat([h3, a3 * h3], axis=-1)
+        # Flattening
+        g = tf.keras.layers.Flatten()(g3)
+        g = tf.keras.layers.Dense(out_channels*2)(g)
+        g = tf.keras.layers.Dense(out_channels)(g)
+        g = tf.keras.layers.Softmax(axis=1)(g)
+        g = tf.keras.layers.Reshape((-1, 1, 1, 37))(g)
+        outputs.append(g)
+    outputs = tf.concat(outputs, axis=3)
+    outputs = tf.keras.layers.Reshape((-1, 13, 37))(outputs)
+    print(outputs.shape)
     # Model compilation
     model = Model(inputs=[inputs], outputs=[outputs])
     model.compile(optimizer='adam',
