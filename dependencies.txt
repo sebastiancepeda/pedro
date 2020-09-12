@@ -1,16 +1,3 @@
-# conda remove --name seg_models --all
-conda create -n seg_models python=3.7 -y && \
-conda activate seg_models
-
-conda install -c anaconda tensorflow-gpu=2.3.0 -y && \
-conda install -c conda-forge opencv -y && \
-pip install segmentation-models && \
-conda install spyder-kernels -y && \
-conda install -c anaconda pandas -y && \
-conda install pytorch torchvision -c pytorch -y && \
-conda install -c conda-forge loguru -y
 ---
 # conda remove --name seg_models --all
-conda create -n seg_models python=3.7 -y && \
-conda activate seg_models
-pip install tensorflow-gpu opencv-python pandas torch loguru Pillow nltk
+conda create -n seg_models python=3.7 -y && conda activate seg_models && pip install tensorflow-gpu opencv-python pandas torch loguru Pillow nltk
