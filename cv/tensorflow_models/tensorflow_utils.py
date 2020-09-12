@@ -43,8 +43,7 @@ def train_model_gen(data_train, data_val, model, params, logger):
     model_checkpoint_callback = keras.callbacks.ModelCheckpoint(
             model_file,
             save_weights_only=True,
-            save_best_only=False,
-            # save_best_only=True,
+            save_best_only=False,  # save_best_only=True,
             mode='min')
     tensorboard_callback = keras.callbacks.TensorBoard(
             log_dir='./graphs', histogram_freq=0, batch_size=32,

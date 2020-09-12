@@ -35,7 +35,7 @@ def get_params():
     plate_shape = (200, 50)
     color = (255, 0, 0)
     thickness = 3
-    debug_level = 0
+    debug_level = 5
     min_pct = 0.04
     max_pct = 0.20
     min_area = (big_shape[0] * min_pct) * (big_shape[1] * min_pct)
@@ -93,6 +93,9 @@ def plate_segmentation(event, context, logger):
     x = get_image(file, dsize, in_channels)
     x = pred2im(x, dsize, 0, in_channels)
     logger.info("Pre process input")
+    if debug_level > 0:
+        x_debug = cv2.resize(x, dsize=big_shape, interpolation=cv2.INTER_CUBIC)
+        save_image(x_debug, f"{out_folder}/rectangle_{file_debug_name}_x.png")
     x = preprocess_input(x)
     logger.info("Inference")
     x = x.reshape(1, dsize[0], dsize[0], 3)
@@ -105,7 +108,7 @@ def plate_segmentation(event, context, logger):
     logger.info("Getting contours")
     contours = get_contours_rgb(y, min_area, max_area)
     if debug_level > 0:
-        save_image(y, f"{out_folder}/rectangle_{file_debug_name}.png")
+        save_image(255-y, f"{out_folder}/rectangle_{file_debug_name}_y.png")
     if len(contours) > 0:
         # logger.info("Min area bounding box")
         rectangle = get_rectangle(contours)
@@ -155,8 +158,8 @@ def segment_plates(params):
         'preprocess_input': preprocess_input,
     }
     context.update({k: params[k] for k in params_subset})
-    for f in files:
-        event = {'image_file': f}
+    events = [{'image_file': f, 'ejec_id': ejec_id} for ejec_id, f in enumerate(files)]
+    for event in events:
         plate_segmentation(event, context, logger)
 
 

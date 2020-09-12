@@ -6,10 +6,8 @@
 import tensorflow as tf
 from tensorflow.keras import Model
 from tensorflow.keras.layers import (
-    Conv2D, Conv2DTranspose,
-    Dropout, Lambda, Input,
-    MaxPooling2D, concatenate,
-)
+    Conv2D, Lambda, Input,
+    MaxPooling2D, )
 
 
 def identity_function(x):
@@ -21,6 +19,15 @@ def normalize_image_shape(height, width):
     width = (width // base) * base + base * int(width > 0)
     height = (height // base) * base + base * int(height > 0)
     return height, width
+
+
+def compose_fs(functions):
+    def composed_function(x):
+        for f in functions:
+            x = f(x)
+        return x
+
+    return composed_function
 
 
 def get_model_definition(img_height, img_width, in_channels, out_channels):
@@ -36,16 +43,25 @@ def get_model_definition(img_height, img_width, in_channels, out_channels):
         'kernel_initializer': 'he_normal',
         'padding': 'same',
     }
-    k_size = (3,)*2
+    k_size = (3,) * 2
     h_dim = 10
     h1 = Conv2D(h_dim, kernel_size=k_size, **kwargs_conv2d)(x)
     h1 = Conv2D(h_dim, kernel_size=k_size, **kwargs_conv2d)(h1)
     h2 = MaxPooling2D((2, 2))(h1)
-    h2 = Conv2D(h_dim*2, kernel_size=k_size, **kwargs_conv2d)(h2)
-    h2 = Conv2D(h_dim*2, kernel_size=k_size, **kwargs_conv2d)(h2)
+    h2 = Conv2D(h_dim * 2, kernel_size=k_size, **kwargs_conv2d)(h2)
+    h2 = Conv2D(h_dim * 2, kernel_size=k_size, **kwargs_conv2d)(h2)
     h3 = MaxPooling2D((2, 2))(h2)
-    h3 = Conv2D(h_dim*2, kernel_size=k_size, **kwargs_conv2d)(h3)
-    h3 = Conv2D(h_dim*2, kernel_size=k_size, **kwargs_conv2d)(h3)
+    h3 = Conv2D(h_dim * 2, kernel_size=k_size, **kwargs_conv2d)(h3)
+    h3 = Conv2D(h_dim * 2, kernel_size=k_size, **kwargs_conv2d)(h3)
+
+    fg = compose_fs([
+        tf.keras.layers.Flatten(),
+        tf.keras.layers.Dense(out_channels * 2),
+        tf.keras.layers.Dense(out_channels),
+        tf.keras.layers.Softmax(axis=1),
+        tf.keras.layers.Reshape((-1, 1, 1, 37)),
+    ])
+
     outputs = []
     for it in range(13):
         # First glimpse
@@ -79,11 +95,7 @@ def get_model_definition(img_height, img_width, in_channels, out_channels):
         a3 = tf.tile(a3, multiples=[1, 1, 1, h3.shape[-1]])
         g3 = tf.concat([h3, a3 * h3], axis=-1)
         # Flattening
-        g = tf.keras.layers.Flatten()(g3)
-        g = tf.keras.layers.Dense(out_channels*2)(g)
-        g = tf.keras.layers.Dense(out_channels)(g)
-        g = tf.keras.layers.Softmax(axis=1)(g)
-        g = tf.keras.layers.Reshape((-1, 1, 1, 37))(g)
+        g = fg(g3)
         outputs.append(g)
     outputs = tf.concat(outputs, axis=3)
     outputs = tf.keras.layers.Reshape((-1, 13, 37))(outputs)
