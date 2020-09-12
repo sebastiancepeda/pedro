@@ -1,5 +1,5 @@
 # With GPU
-conda deactivate ; conda remove --name seg_models --all -y ; conda create -n seg_models python=3.7 -y && conda activate seg_models && conda install -c conda-forge tensorflow-gpu -y && pip install opencv-python pandas torch loguru Pillow
+conda deactivate ; conda remove --name seg_models_gpu --all -y ; conda create -n seg_models_gpu python=3.7 -y && conda activate seg_models_gpu && conda install -c conda-forge tensorflow-gpu -y && pip install opencv-python pandas torch loguru Pillow
 
 # With CPU
-conda deactivate ; conda remove --name seg_models --all -y ; conda create -n seg_models python=3.7 -y && conda activate seg_models && conda install -c conda-forge tensorflow -y && pip install opencv-python pandas torch loguru Pillow
+conda deactivate ; conda remove --name seg_models_cpu --all -y ; conda create -n seg_models_cpu python=3.7 -y && conda activate seg_models_cpu && conda install -c conda-forge tensorflow -y && pip install opencv-python pandas torch loguru Pillow
