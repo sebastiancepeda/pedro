@@ -48,11 +48,14 @@ def get_model_definition(img_height, img_width, in_channels, out_channels):
     abecedary_len = 37
     k_size = (3,) * 2
     h_dim = 10
-    h1 = Conv2D(h_dim, kernel_size=k_size, **kwargs_conv2d)(x)
-    h1 = Conv2D(h_dim, kernel_size=k_size, **kwargs_conv2d)(h1)
-    h2 = MaxPooling2D((2, 2))(h1)
-    h2 = Conv2D(h_dim * 2, kernel_size=k_size, **kwargs_conv2d)(h2)
-    h2 = Conv2D(h_dim * 2, kernel_size=k_size, **kwargs_conv2d)(h2)
+    h = Conv2D(h_dim, kernel_size=k_size, **kwargs_conv2d)(x)
+    h = Conv2D(h_dim, kernel_size=k_size, **kwargs_conv2d)(h)
+    h = MaxPooling2D((2, 2))(h)
+    h = Conv2D(h_dim, kernel_size=k_size, **kwargs_conv2d)(h)
+    h = Conv2D(h_dim, kernel_size=k_size, **kwargs_conv2d)(h)
+    h = MaxPooling2D((2, 2))(h)
+    h = Conv2D(h_dim, kernel_size=k_size, **kwargs_conv2d)(h)
+    h = Conv2D(h_dim, kernel_size=k_size, **kwargs_conv2d)(h)
 
     def position_f(pos):
         pos = np.identity(abecedary_len)[pos]
@@ -62,15 +65,19 @@ def get_model_definition(img_height, img_width, in_channels, out_channels):
 
     x2_f = compose_fs((
         Conv2D(h_dim, kernel_size=k_size, **kwargs_conv2d),
-        Conv2D(2, kernel_size=k_size, **kwargs_conv2d),
+        Conv2D(h_dim, kernel_size=k_size, **kwargs_conv2d),
         MaxPooling2D((2, 2)),
-        Conv2D(h_dim * 2, kernel_size=k_size, **kwargs_conv2d),
-        Conv2D(h_dim * 2, kernel_size=k_size, **kwargs_conv2d),
+        Conv2D(h_dim, kernel_size=k_size, **kwargs_conv2d),
+        Conv2D(h_dim, kernel_size=k_size, **kwargs_conv2d),
+        MaxPooling2D((2, 2)),
+        Conv2D(h_dim, kernel_size=k_size, **kwargs_conv2d),
+        Conv2D(h_dim, kernel_size=k_size, **kwargs_conv2d),
+        Conv2D(2, kernel_size=k_size, **kwargs_conv2d),
         tf.keras.layers.Flatten(),
     ))
     attention_f = compose_fs((
-        tf.keras.layers.Dense(h2.shape[1] * h2.shape[2] * 2),
-        tf.keras.layers.Reshape((h2.shape[1], h2.shape[2], 2)),
+        tf.keras.layers.Dense(h.shape[1] * h.shape[2] * 2),
+        tf.keras.layers.Reshape((h.shape[1], h.shape[2], 2)),
         tf.keras.layers.Softmax(axis=-1),
     ))
     glimpse_f = compose_fs((
@@ -86,8 +93,8 @@ def get_model_definition(img_height, img_width, in_channels, out_channels):
         x2 = tf.concat([x2, position], axis=-1)
         attention = attention_f(x2)
         attention = attention[:, :, :, 0:1]
-        attention = tf.tile(attention, multiples=[1, 1, 1, h2.shape[-1]])
-        glimpse = tf.concat([h2, attention * h2], axis=-1)
+        attention = tf.tile(attention, multiples=[1, 1, 1, h.shape[-1]])
+        glimpse = tf.concat([h, attention * h], axis=-1)
         glimpse = glimpse_f(glimpse)
         outputs.append(glimpse)
     outputs = tf.concat(outputs, axis=3)
