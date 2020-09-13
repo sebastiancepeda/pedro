@@ -47,8 +47,11 @@ def get_model_definition(img_height, img_width, in_channels, out_channels):
     timesteps = 13
     abecedary_len = 37
     k_size = (3,) * 2
-    h_dim = 10
+    h_dim = 20
     h = Conv2D(h_dim, kernel_size=k_size, **kwargs_conv2d)(x)
+    h = Conv2D(h_dim, kernel_size=k_size, **kwargs_conv2d)(h)
+    h = MaxPooling2D((2, 2))(h)
+    h = Conv2D(h_dim, kernel_size=k_size, **kwargs_conv2d)(h)
     h = Conv2D(h_dim, kernel_size=k_size, **kwargs_conv2d)(h)
     h = MaxPooling2D((2, 2))(h)
     h = Conv2D(h_dim, kernel_size=k_size, **kwargs_conv2d)(h)
@@ -64,6 +67,9 @@ def get_model_definition(img_height, img_width, in_channels, out_channels):
         return pos
 
     x2_f = compose_fs((
+        Conv2D(h_dim, kernel_size=k_size, **kwargs_conv2d),
+        Conv2D(h_dim, kernel_size=k_size, **kwargs_conv2d),
+        MaxPooling2D((2, 2)),
         Conv2D(h_dim, kernel_size=k_size, **kwargs_conv2d),
         Conv2D(h_dim, kernel_size=k_size, **kwargs_conv2d),
         MaxPooling2D((2, 2)),

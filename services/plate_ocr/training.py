@@ -73,10 +73,8 @@ def train_ocr_model(params):
         'in_channels': in_channels, 'out_channels': out_channels,
         'alphabet': alphabet
     }
-    data_train = ImageTextLabelGenerator(get_image_text_label,
-                                         preprocess_input, f_train_params)
-    data_val = ImageTextLabelGenerator(get_image_text_label, preprocess_input,
-                                       f_test_params)
+    data_train = ImageTextLabelGenerator(get_image_text_label, preprocess_input, f_train_params)
+    data_val = ImageTextLabelGenerator(get_image_text_label, preprocess_input, f_test_params)
     train_model_gen(data_train, data_val, model, params, logger)
 
 
@@ -103,10 +101,8 @@ def train_ocr_model_sim(params):
         'in_channels': in_channels, 'out_channels': out_channels,
         'alphabet': alphabet
     }
-    data_train = ImageTextLabelGenerator(get_image_text_label_sim,
-                                         preprocess_input, f_train_params)
-    data_val = ImageTextLabelGenerator(get_image_text_label, preprocess_input,
-                                       f_test_params)
+    data_train = ImageTextLabelGenerator(get_image_text_label_sim, preprocess_input, f_train_params)
+    data_val = ImageTextLabelGenerator(get_image_text_label, preprocess_input, f_test_params)
     train_model_gen(data_train, data_val, model, params, logger)
 
 
