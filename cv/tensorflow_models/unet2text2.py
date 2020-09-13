@@ -7,7 +7,7 @@ import tensorflow as tf
 from tensorflow.keras import Model
 from tensorflow.keras.layers import (
     Conv2D, Lambda, Input,
-    MaxPooling2D, )
+    MaxPooling2D)
 
 
 def identity_function(x):
@@ -53,7 +53,6 @@ def get_model_definition(img_height, img_width, in_channels, out_channels):
     h3 = MaxPooling2D((2, 2))(h2)
     h3 = Conv2D(h_dim * 2, kernel_size=k_size, **kwargs_conv2d)(h3)
     h3 = Conv2D(h_dim * 2, kernel_size=k_size, **kwargs_conv2d)(h3)
-
     fg = compose_fs([
         tf.keras.layers.Flatten(),
         tf.keras.layers.Dense(out_channels * 2),
@@ -61,7 +60,6 @@ def get_model_definition(img_height, img_width, in_channels, out_channels):
         tf.keras.layers.Softmax(axis=1),
         tf.keras.layers.Reshape((-1, 1, 1, 37)),
     ])
-
     outputs = []
     for it in range(13):
         # First glimpse
@@ -102,8 +100,8 @@ def get_model_definition(img_height, img_width, in_channels, out_channels):
     print(outputs.shape)
     # Model compilation
     model = Model(inputs=[inputs], outputs=[outputs])
-    model.compile(optimizer='adam',
-                  loss='binary_crossentropy',
-                  metrics=['accuracy'])
+    model.compile(
+        optimizer='adam', loss='binary_crossentropy', metrics=['accuracy']
+    )
     pre_process_input = identity_function
     return model, pre_process_input
