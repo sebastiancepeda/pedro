@@ -47,7 +47,8 @@ def get_model_definition(img_height, img_width, in_channels, out_channels):
     timesteps = 13
     abecedary_len = 37
     k_size = (3,) * 2
-    h_dim = 20
+    h_dim = 5
+
     h = Conv2D(h_dim, kernel_size=k_size, **kwargs_conv2d)(x)
     h = Conv2D(h_dim, kernel_size=k_size, **kwargs_conv2d)(h)
     h = MaxPooling2D((2, 2))(h)
@@ -67,24 +68,17 @@ def get_model_definition(img_height, img_width, in_channels, out_channels):
         return pos
 
     x2_f = compose_fs((
-        Conv2D(h_dim, kernel_size=k_size, **kwargs_conv2d),
-        Conv2D(h_dim, kernel_size=k_size, **kwargs_conv2d),
-        MaxPooling2D((2, 2)),
-        Conv2D(h_dim, kernel_size=k_size, **kwargs_conv2d),
-        Conv2D(h_dim, kernel_size=k_size, **kwargs_conv2d),
-        MaxPooling2D((2, 2)),
-        Conv2D(h_dim, kernel_size=k_size, **kwargs_conv2d),
-        Conv2D(h_dim, kernel_size=k_size, **kwargs_conv2d),
-        MaxPooling2D((2, 2)),
-        Conv2D(h_dim, kernel_size=k_size, **kwargs_conv2d),
-        Conv2D(h_dim, kernel_size=k_size, **kwargs_conv2d),
         Conv2D(2, kernel_size=k_size, **kwargs_conv2d),
         tf.keras.layers.Flatten(),
     ))
     attention_f = compose_fs((
         tf.keras.layers.Dense(h.shape[1] * h.shape[2] * 2),
+        tf.keras.layers.Dense(h.shape[1] * h.shape[2] * 2),
+        tf.keras.layers.Dense(h.shape[1] * h.shape[2] * 2),
         tf.keras.layers.Reshape((h.shape[1], h.shape[2], 2)),
         tf.keras.layers.Softmax(axis=-1),
+        lambda aux: aux[:, :, :, 0:1],
+        lambda aux: tf.tile(aux, multiples=[1, 1, 1, h.shape[-1]])
     ))
     glimpse_f = compose_fs((
         tf.keras.layers.Flatten(),
@@ -95,11 +89,9 @@ def get_model_definition(img_height, img_width, in_channels, out_channels):
     outputs = []
     for it in range(timesteps):
         position = position_f(it)
-        x2 = x2_f(x)
+        x2 = x2_f(h)
         x2 = tf.concat([x2, position], axis=-1)
         attention = attention_f(x2)
-        attention = attention[:, :, :, 0:1]
-        attention = tf.tile(attention, multiples=[1, 1, 1, h.shape[-1]])
         glimpse = tf.concat([h, attention * h], axis=-1)
         glimpse = glimpse_f(glimpse)
         outputs.append(glimpse)
