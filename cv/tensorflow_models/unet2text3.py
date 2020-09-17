@@ -47,7 +47,7 @@ def get_model_definition(img_height, img_width, in_channels, out_channels):
     timesteps = 13
     abecedary_len = 37
     k_size = (3,) * 2
-    h_dim = 5
+    h_dim = 50
 
     h = Conv2D(h_dim, kernel_size=k_size, **kwargs_conv2d)(x)
     h = Conv2D(h_dim, kernel_size=k_size, **kwargs_conv2d)(h)

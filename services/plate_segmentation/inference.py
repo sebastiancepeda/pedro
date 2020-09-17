@@ -1,5 +1,6 @@
 import glob
 import cv2
+import pandas as pd
 
 from cv.image_processing import (
     get_contours_rgb,
@@ -127,6 +128,11 @@ def plate_segmentation(event, context, logger):
         save_image(im_pred, f"{out_folder}/plate_{file_debug_name}.png")
     else:
         logger.info("Countours not found")
+    event_result = {
+        'file': file,
+        'len_contours': len(contours),
+    }
+    return event_result
 
 
 def segment_plates(params):
@@ -139,8 +145,9 @@ def segment_plates(params):
     model, preprocess_input = get_model_definition(**model_params)
     model.load_weights(model_file)
     logger.info("Loading data")
-    files = glob.glob(f"{input_folder}/train/*.jpg")
-    files = files + glob.glob(f"{input_folder}/test/*.jpg")
+    train_files = glob.glob(f"{input_folder}/train/*.jpg")
+    test_files = glob.glob(f"{input_folder}/test/*.jpg")
+    files = train_files + test_files
     params_subset = [
         'dsize',
         'model_params',
@@ -159,8 +166,12 @@ def segment_plates(params):
     }
     context.update({k: params[k] for k in params_subset})
     events = [{'image_file': f, 'ejec_id': ejec_id} for ejec_id, f in enumerate(files)]
+    events_results = []
     for event in events:
-        plate_segmentation(event, context, logger)
+        event_result = plate_segmentation(event, context, logger)
+        events_results.append(event_result)
+    events_results = pd.DataFrame(events_results)
+    events_results.to_csv(f"{params['output_folder']}/events_results.csv")
 
 
 if __name__ == "__main__":
