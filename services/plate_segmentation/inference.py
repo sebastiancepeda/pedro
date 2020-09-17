@@ -41,9 +41,13 @@ def get_params():
     max_pct = 0.20
     min_area = (big_shape[0] * min_pct) * (big_shape[1] * min_pct)
     max_area = (big_shape[0] * max_pct) * (big_shape[1] * max_pct)
+    train_files = glob.glob(f"{input_folder}/train/*.jpg")
+    test_files = glob.glob(f"{input_folder}/test/*.jpg")
+    files = train_files + test_files
     params = {
         'input_folder': input_folder,
         'output_folder': output_folder,
+        'files': files,
         'plate_shape': plate_shape,
         'color': color,
         'thickness': thickness,
@@ -132,6 +136,7 @@ def plate_segmentation(event, context, logger):
         'file': file,
         'len_contours': len(contours),
     }
+    logger.info(f"event_result: {event_result}")
     return event_result
 
 
@@ -145,9 +150,7 @@ def segment_plates(params):
     model, preprocess_input = get_model_definition(**model_params)
     model.load_weights(model_file)
     logger.info("Loading data")
-    train_files = glob.glob(f"{input_folder}/train/*.jpg")
-    test_files = glob.glob(f"{input_folder}/test/*.jpg")
-    files = train_files + test_files
+    files = params['files']
     params_subset = [
         'dsize',
         'model_params',
