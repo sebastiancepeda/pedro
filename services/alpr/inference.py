@@ -81,7 +81,6 @@ def alpr_inference(params):
     context.update(params)
     events = [{'image_file': f, 'ejec_id': ejec_id} for ejec_id, f in enumerate(files)]
     results = map(lambda e: plate_segmentation(event=e, context=context), events)
-    results = map(lambda r: {'image': r['image'], 'filename': r['file']}, results)
     results = map(lambda e: image_ocr(event=e, context=context), results)
     results = map(lambda e: {k: e[k] for k in ('filename', 'text')}, results)
     results = pd.DataFrame(results)

@@ -55,11 +55,19 @@ def image_ocr(event, context):
     in_channels = context['plate_ocr_model_params']['in_channels']
     dsize = context['plate_dsize']
     image = event['image']
-    filename = event['filename']
+    filename = event['file']
+    rectangle = event['rectangle']
+    image_debug = event['image_debug']
+    if image is None:
+        result = {
+            'filename': filename,
+            'text': 'none_image',
+        }
+        return result
     if len(image.shape) == 3 and image.shape[2] == 3:
         image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+    rectangle_point = rectangle.mean(axis=0).astype(int)
     image = cv2.resize(image, dsize=(dsize[1], dsize[0]), interpolation=cv2.INTER_CUBIC)
-
     image = np.reshape(image, dsize)
     image_pred = plate_ocr_preprocessing(image)
     image_pred = image_pred.reshape(1, dsize[0], dsize[1], in_channels)
@@ -73,14 +81,17 @@ def image_ocr(event, context):
     text_pred = text_pred.upper().strip()
     file_shortname = filename.split('/')[-1].split('.')[0]
     logger.info(f"[{file_shortname}] detected text: {text_pred.upper()}")
-    font = cv2.FONT_HERSHEY_TRIPLEX
-    clr = (0, 255, 0)
-    pos = (30, 30)
-    line = cv2.LINE_AA
-    image = cv2.cvtColor(image, cv2.COLOR_GRAY2RGB)
-    image = cv2.putText(image, text_pred, pos, font, 1, clr, 2, line)
     if debug_level > 0:
-        save_image(image, f"{out_folder}/images_text_{file_shortname}.png")
+        font = cv2.FONT_HERSHEY_TRIPLEX
+        clr = (0, 0, 255)
+        pos = (30, 30)
+        pos = (rectangle_point[0], rectangle_point[1]+100)
+        line = cv2.LINE_AA
+        # image = cv2.cvtColor(image, cv2.COLOR_GRAY2RGB)
+        # image = cv2.putText(image, text_pred, pos, font, 1, clr, 2, line)
+        # save_image(image, f"{out_folder}/images_text_{file_shortname}.png")
+        image_debug = cv2.putText(image_debug, text_pred, pos, font, 1, clr, 2, line)
+        save_image(image_debug, f"{out_folder}/image_debug_text_{file_shortname}.png")
     result = {
         'filename': filename,
         'text': text_pred,
@@ -112,7 +123,7 @@ def ocr_plates(params, logger):
         'logger': logger,
     }
     context.update(params)
-    events = [{'image': im, 'filename': filename, 'ejec_id': ejec_id
+    events = [{'image': im, 'file': filename, 'ejec_id': ejec_id
                } for ejec_id, filename, im in zip(range(len(meta)), meta.file_name, images)]
     results = map(lambda e: image_ocr(event=e, context=context), events)
     results = map(lambda e: {k: e[k] for k in ('filename', 'text')}, results)

@@ -90,9 +90,9 @@ def plate_segmentation(event, context):
     x = get_image(file, dsize, in_channels)
     x = pred2im(x, dsize, 0, in_channels)
     logger.info("Pre process input")
-    if debug_level > 0:
-        x_debug = cv2.resize(x, dsize=big_shape, interpolation=cv2.INTER_CUBIC)
-        save_image(x_debug, f"{out_folder}/rectangle_{file_debug_name}_x.png")
+    # if debug_level > 0:
+    #     x_debug = cv2.resize(x, dsize=big_shape, interpolation=cv2.INTER_CUBIC)
+    #     save_image(x_debug, f"{out_folder}/rectangle_{file_debug_name}_x.png")
     x = preprocess_input(x)
     logger.info("Inference")
     x = x.reshape(1, dsize[0], dsize[0], 3)
@@ -104,15 +104,16 @@ def plate_segmentation(event, context):
     y = cv2.resize(y, dsize=big_shape, interpolation=cv2.INTER_CUBIC)
     logger.info("Getting contours")
     contours = get_contours_rgb(y, min_area, max_area)
-    if debug_level > 0:
-        save_image(255-y, f"{out_folder}/rectangle_{file_debug_name}_y.png")
+    # if debug_level > 0:
+    #     save_image(255-y, f"{out_folder}/rectangle_{file_debug_name}_y.png")
     im_pred = None
+    rectangle = None
     if len(contours) > 0:
         rectangle = get_rectangle(contours)
+        image_debug = cv2.drawContours(image.copy(), [rectangle], 0, color, thickness)
         if debug_level > 0:
             logger.info(f"Saving rectangle")
-            image_debug = cv2.drawContours(image.copy(), [rectangle], 0, color, thickness)
-            save_image(image_debug, f"{out_folder}/rectangle_{file_debug_name}.png")
+            # save_image(image_debug, f"{out_folder}/rectangle_{file_debug_name}.png")
             # image_debug = cv2.drawContours(image.copy(), [box], 0, color, thickness)
             # logger.info(f"Saving min_area_boxes")
             # save_image(image_debug, f"{out_folder}/min_area_box_{file_debug_name}.png")
@@ -120,14 +121,16 @@ def plate_segmentation(event, context):
         warping = get_warping(rectangle, plate_shape)
         im_pred = warp_image(image, warping, plate_shape)
         logger.info(f"Saving min_area_boxes")
-        if debug_level > 0:
-            save_image(im_pred, f"{out_folder}/plate_{file_debug_name}.png")
+        # if debug_level > 0:
+        #     save_image(im_pred, f"{out_folder}/plate_{file_debug_name}.png")
     else:
         logger.info("Countours not found")
     result = {
         'file': file,
+        'rectangle': rectangle,
         'len_contours': len(contours),
         'image': im_pred,
+        'image_debug': image_debug,
     }
     logger.info(f"contours [{file.split('/')[-1]}]: {len(contours)}")
     return result
