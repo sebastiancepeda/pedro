@@ -108,6 +108,7 @@ def plate_segmentation(event, context):
     #     save_image(255-y, f"{out_folder}/rectangle_{file_debug_name}_y.png")
     im_pred = None
     rectangle = None
+    image_debug = None
     if len(contours) > 0:
         rectangle = get_rectangle(contours)
         image_debug = cv2.drawContours(image.copy(), [rectangle], 0, color, thickness)
