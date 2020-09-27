@@ -7,11 +7,10 @@ from cv.image_processing import (
     get_warping,
     warp_image,
     pred2im,
-    get_quadrilateral,
     save_image,
     get_rectangle,
 )
-from cv.tensorflow_models.unet_little import get_model_definition
+from cv.tensorflow_models.unet_little import get_model_definition as plate_seg_model_def
 from io_utils.data_source import (
     get_image,
 )
@@ -26,17 +25,11 @@ def get_params():
     output_folder = f'{path}/plates/plate_segmentation'
     # dsize = (576, 576)
     dsize = (256, 256)
-    # alphabet = '0p'
-    alphabet = [' ', 'plate']
-    alphabet = {char: idx for char, idx in zip(alphabet, range(len(alphabet)))}
-    in_channels = 3
-    out_channels = len(alphabet)
-    # big_shape = (512, 512)
     big_shape = (1024, 1024)
     plate_shape = (200, 50)
     color = (255, 0, 0)
     thickness = 3
-    debug_level = 5
+    debug_level = 1#5
     min_pct = 0.04
     max_pct = 0.20
     min_area = (big_shape[0] * min_pct) * (big_shape[1] * min_pct)
@@ -53,19 +46,17 @@ def get_params():
         'thickness': thickness,
         'debug_level': debug_level,
         'dsize': dsize,
-        'model_folder': f'{output_folder}/model',
-        'model_file': f'{output_folder}/model/best_model.h5',
+        'plate_segmentation_model_file': f'{output_folder}/model/best_model.h5',
         'labels': f"{input_folder}/labels_plate_text.json",
         'metadata': f"{input_folder}/files.csv",
-        'alphabet': alphabet,
         'big_shape': big_shape,
         'min_area': min_area,
         'max_area': max_area,
-        'model_params': {
-            'img_height': dsize[0],
-            'img_width': dsize[1],
-            'in_channels': in_channels,
-            'out_channels': out_channels,
+        'plate_segmentation_model_params': {
+            'img_height': 256,
+            'img_width': 256,
+            'in_channels': 3,
+            'out_channels': 2,
         },
     }
     return params
@@ -78,12 +69,13 @@ def draw_rectangle(im, r):
     return im
 
 
-def plate_segmentation(event, context, logger):
+def plate_segmentation(event, context):
+    logger = context['logger']
     file = event['image_file']
     dsize = context['dsize']
-    model = context['model']
-    in_channels = context['model_params']['in_channels']
-    preprocess_input = context['preprocess_input']
+    model = context['plate_segmentation_model']
+    in_channels = context['plate_segmentation_model_params']['in_channels']
+    preprocess_input = context['plate_segmentation_preprocessing']
     out_folder = context['output_folder']
     big_shape = context['big_shape']
     min_area = context['min_area']
@@ -114,10 +106,9 @@ def plate_segmentation(event, context, logger):
     contours = get_contours_rgb(y, min_area, max_area)
     if debug_level > 0:
         save_image(255-y, f"{out_folder}/rectangle_{file_debug_name}_y.png")
+    im_pred = None
     if len(contours) > 0:
-        # logger.info("Min area bounding box")
         rectangle = get_rectangle(contours)
-        # box = get_quadrilateral(contours[0])
         if debug_level > 0:
             logger.info(f"Saving rectangle")
             image_debug = cv2.drawContours(image.copy(), [rectangle], 0, color, thickness)
@@ -129,52 +120,40 @@ def plate_segmentation(event, context, logger):
         warping = get_warping(rectangle, plate_shape)
         im_pred = warp_image(image, warping, plate_shape)
         logger.info(f"Saving min_area_boxes")
-        save_image(im_pred, f"{out_folder}/plate_{file_debug_name}.png")
+        if debug_level > 0:
+            save_image(im_pred, f"{out_folder}/plate_{file_debug_name}.png")
     else:
         logger.info("Countours not found")
-    event_result = {
+    result = {
         'file': file,
         'len_contours': len(contours),
+        'image': im_pred,
     }
-    logger.info(f"event_result: {event_result}")
-    return event_result
+    logger.info(f"contours [{file.split('/')[-1]}]: {len(contours)}")
+    return result
 
 
 def segment_plates(params):
     from loguru import logger
 
-    model_file = params['model_file']
-    input_folder = params['input_folder']
+    model_file = params['plate_segmentation_model_file']
     logger.info("Loading model")
-    model_params = params['model_params']
-    model, preprocess_input = get_model_definition(**model_params)
-    model.load_weights(model_file)
+    plate_segmentation_model_params = params['plate_segmentation_model_params']
+    plate_segmentation_model_file, plate_segmentation_preprocessing = plate_seg_model_def(**plate_segmentation_model_params)
+    plate_segmentation_model_file.load_weights(model_file)
     logger.info("Loading data")
     files = params['files']
-    params_subset = [
-        'dsize',
-        'model_params',
-        'output_folder',
-        'big_shape',
-        'min_area',
-        'max_area',
-        'debug_level',
-        'color',
-        'thickness',
-        'plate_shape',
-    ]
     context = {
-        'model': model,
-        'preprocess_input': preprocess_input,
+        'logger': logger,
+        'plate_segmentation_model': plate_segmentation_model_file,
+        'plate_segmentation_preprocessing': plate_segmentation_preprocessing,
     }
-    context.update({k: params[k] for k in params_subset})
+    context.update(params)
     events = [{'image_file': f, 'ejec_id': ejec_id} for ejec_id, f in enumerate(files)]
-    events_results = []
-    for event in events:
-        event_result = plate_segmentation(event, context, logger)
-        events_results.append(event_result)
-    events_results = pd.DataFrame(events_results)
-    events_results.to_csv(f"{params['output_folder']}/events_results.csv")
+    results = map(lambda e: plate_segmentation(event=e, context=context), events)
+    results = map(lambda e: {k: e[k] for k in ('file', 'len_contours')}, results)
+    results = pd.DataFrame(results)
+    results.to_csv(f"{params['output_folder']}/events_results.csv")
 
 
 if __name__ == "__main__":

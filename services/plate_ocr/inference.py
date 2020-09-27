@@ -1,13 +1,13 @@
 import cv2
+import pandas as pd
 import numpy as np
 from loguru import logger
-import nltk
 
 from cv.image_processing import (
-    pred2im, print_images
+    pred2im, save_image
 )
-from cv.tensorflow_models.unet2text3 import (
-    get_model_definition, normalize_image_shape)
+from cv.tensorflow_models.unet2text3 import (normalize_image_shape)
+from cv.tensorflow_models.unet2text3 import get_model_definition as plate_ocr_model_def
 from io_utils.data_source import (
     get_image_text_label, get_plates_text_metadata)
 from io_utils.utils import set_index
@@ -19,27 +19,22 @@ def get_params():
     output_folder = f'{path}/plates/plate_ocr'
     width = 200
     height = 50
-    height, width = normalize_image_shape(height, width)
-    #height = height + 1
-    #width = width + 1
-    dsize = (height, width)
+    ocr_height, ocr_width = normalize_image_shape(50, 200)
     alphabet = ' abcdefghijklmnopqrstuvwxyz0123456789'
     alphabet = {char: idx for char, idx in zip(alphabet, range(len(alphabet)))}
-    in_channels = 1
-    out_channels = len(alphabet)
     params = {
         'input_folder': input_folder,
         'output_folder': output_folder,
-        'dsize': dsize,
-        'model_folder': f'{output_folder}/model',
-        'model_file': f'{output_folder}/model/best_model.h5',
+        'plate_dsize': (ocr_height, ocr_width),
+        'plate_ocr_model_file': f'{output_folder}/model/best_model.h5',
         'metadata': f"{path}/plates/input/labels/ocr/files.csv",
         'alphabet': alphabet,
-        'model_params': {
-            'img_height': dsize[0],
-            'img_width': dsize[1],
-            'in_channels': in_channels,
-            'out_channels': out_channels,
+        'debug_level': 1,
+        'plate_ocr_model_params': {
+            'img_height': ocr_height,
+            'img_width': ocr_width,
+            'in_channels': 1,
+            'out_channels': len(alphabet),
         },
     }
     return params
@@ -51,18 +46,59 @@ def draw_rectangle(im, r):
     return im
 
 
+def image_ocr(event, context):
+    logger = context['logger']
+    out_folder = context['output_folder']
+    debug_level = context['debug_level']
+    plate_ocr_model = context['plate_ocr_model']
+    plate_ocr_preprocessing = context['plate_ocr_preprocessing']
+    in_channels = context['plate_ocr_model_params']['in_channels']
+    dsize = context['plate_dsize']
+    image = event['image']
+    filename = event['filename']
+    if len(image.shape) == 3 and image.shape[2] == 3:
+        image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+    image = cv2.resize(image, dsize=(dsize[1], dsize[0]), interpolation=cv2.INTER_CUBIC)
+
+    image = np.reshape(image, dsize)
+    image_pred = plate_ocr_preprocessing(image)
+    image_pred = image_pred.reshape(1, dsize[0], dsize[1], in_channels)
+    image_pred = plate_ocr_model.predict(image_pred)
+    image_pred = np.argmax(image_pred, axis=3)
+    alphabet = context['alphabet']
+    inv_alphabet = {alphabet[char]: char for char in alphabet.keys()}
+    image_pred = image_pred.flatten().tolist()
+    text_pred = [inv_alphabet[idx] for idx in image_pred]
+    text_pred = ''.join(text_pred)
+    text_pred = text_pred.upper().strip()
+    file_shortname = filename.split('/')[-1].split('.')[0]
+    logger.info(f"[{file_shortname}] detected text: {text_pred.upper()}")
+    font = cv2.FONT_HERSHEY_TRIPLEX
+    clr = (0, 255, 0)
+    pos = (30, 30)
+    line = cv2.LINE_AA
+    image = cv2.cvtColor(image, cv2.COLOR_GRAY2RGB)
+    image = cv2.putText(image, text_pred, pos, font, 1, clr, 2, line)
+    if debug_level > 0:
+        save_image(image, f"{out_folder}/images_text_{file_shortname}.png")
+    result = {
+        'filename': filename,
+        'text': text_pred,
+    }
+    return result
+
+
 def ocr_plates(params, logger):
-    model_file = params['model_file']
+    model_file = params['plate_ocr_model_file']
     input_folder = params['input_folder']
-    dsize = params['dsize']
-    out_folder = params['output_folder']
-    in_channels = params['model_params']['in_channels']
-    out_channels = params['model_params']['out_channels']
-    model_params = params['model_params']
+    dsize = params['plate_dsize']
+    in_channels = params['plate_ocr_model_params']['in_channels']
+    out_channels = params['plate_ocr_model_params']['out_channels']
+    model_params = params['plate_ocr_model_params']
     alphabet = params['alphabet']
     logger.info("Loading model")
-    model, preprocess_input = get_model_definition(**model_params)
-    model.load_weights(model_file)
+    plate_ocr_model, plate_ocr_preprocessing = plate_ocr_model_def(**model_params)
+    plate_ocr_model.load_weights(model_file)
     logger.info("Loading data")
     meta = get_plates_text_metadata(params)
     meta.file_name = 'plate_' + meta.file_name
@@ -70,33 +106,18 @@ def ocr_plates(params, logger):
     meta = set_index(meta)
     x, _ = get_image_text_label(input_folder, meta, dsize, in_channels, out_channels, alphabet)
     images = map(lambda idx: pred2im(x, dsize, idx, in_channels), range(len(x)))
-    logger.info("Pre process input")
-    images_pred = map(preprocess_input, images)
-    logger.info("Inference")
-    images_pred = map(lambda im: im.reshape(1, dsize[0], dsize[1], in_channels), images_pred)
-    images_pred = map(model.predict, images_pred)
-    images_pred = map(lambda im: np.argmax(im, axis=3), images_pred)
-    alphabet = params['alphabet']
-    inv_alphabet = {alphabet[char]: char for char in alphabet.keys()}
-    logger.info("Getting texts")
-    texts = []
-    for y, im_name, text in zip(images_pred, meta.image_name, meta.plate):
-        y = y.flatten().tolist()
-        text_pred = [inv_alphabet[idx] for idx in y]
-        text_pred = ''.join(text_pred)
-        text_pred = text_pred.upper().strip()
-        logger.info(f"Text {im_name: <7}: {text_pred.upper()} - {text}")
-        texts.append(text_pred)
-    meta['text_pred'] = texts
-    meta["edit_distance"] = meta.loc[:, ["plate", "text_pred"]].apply(lambda row: nltk.edit_distance(*row), axis=1)
-    meta.to_csv(f"{out_folder}/results.csv")
-    font = cv2.FONT_HERSHEY_TRIPLEX
-    clr = (0, 255, 0)
-    pos = (30, 30)
-    line = cv2.LINE_AA
-    images = [cv2.cvtColor(im, cv2.COLOR_GRAY2RGB) for im in images]
-    images = [cv2.putText(im, txt, pos, font, 1, clr, 2, line) for im, txt in zip(images, texts)]
-    print_images(images, meta, out_folder, "images_text", logger)
+    context = {
+        'plate_ocr_model': plate_ocr_model,
+        'plate_ocr_preprocessing': plate_ocr_preprocessing,
+        'logger': logger,
+    }
+    context.update(params)
+    events = [{'image': im, 'filename': filename, 'ejec_id': ejec_id
+               } for ejec_id, filename, im in zip(range(len(meta)), meta.file_name, images)]
+    results = map(lambda e: image_ocr(event=e, context=context), events)
+    results = map(lambda e: {k: e[k] for k in ('filename', 'text')}, results)
+    results = pd.DataFrame(results)
+    results.to_csv(f"{params['output_folder']}/ocr_events_results.csv")
 
 
 if __name__ == "__main__":
