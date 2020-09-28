@@ -85,9 +85,12 @@ def image_ocr(event, context):
         font = cv2.FONT_HERSHEY_TRIPLEX
         pos1 = (rectangle_point[0], rectangle_point[1]+100)
         pos2 = (rectangle_point[0]+200, rectangle_point[1]+200)
+        pos = (rectangle_point[0], rectangle_point[1] + 150)
+        pos1 = (0, 0 + 100)
+        pos2 = (0 + 200, 0 + 200)
+        pos = (0, 0 + 150)
         image_debug = cv2.rectangle(image_debug, pos1, pos2, (0, 0, 0), -1)
         line = cv2.LINE_AA
-        pos = (rectangle_point[0], rectangle_point[1] + 150)
         image_debug = cv2.putText(image_debug, text_pred, pos, font, 1, (0, 255, 0), 2, line)
         save_image(image_debug, f"{out_folder}/image_debug_text_{file_shortname}.png")
     result = {

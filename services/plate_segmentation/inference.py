@@ -7,12 +7,13 @@ from cv.image_processing import (
     get_warping,
     warp_image,
     pred2im,
-    save_image,
     get_rectangle,
+    save_image
 )
 from cv.tensorflow_models.unet_little import get_model_definition as plate_seg_model_def
 from io_utils.data_source import (
     get_image,
+    im2gray
 )
 from io_utils.utils import (
     CustomLogger
@@ -87,7 +88,8 @@ def plate_segmentation(event, context):
     file_debug_name = file.split('/')[-1]
     file_debug_name = file_debug_name.split('.')[0]
     logger = CustomLogger(file_debug_name, logger)
-    x = get_image(file, dsize, in_channels)
+    image_color = get_image(file)
+    x = im2gray(image_color, dsize, in_channels)
     x = pred2im(x, dsize, 0, in_channels)
     logger.info("Pre process input")
     # if debug_level > 0:
@@ -98,7 +100,7 @@ def plate_segmentation(event, context):
     x = x.reshape(1, dsize[0], dsize[0], 3)
     y = (model.predict(x) * 255).round()
     y = pred2im(y, dsize, 0, 3)
-    image = get_image(file, big_shape, in_channels)
+    image = im2gray(image_color, big_shape, in_channels)
     image = pred2im(image, big_shape, 0, in_channels)
     image = image.reshape(big_shape[0], big_shape[0], 3)
     y = cv2.resize(y, dsize=big_shape, interpolation=cv2.INTER_CUBIC)
@@ -111,10 +113,17 @@ def plate_segmentation(event, context):
     image_debug = None
     if len(contours) > 0:
         rectangle = get_rectangle(contours)
-        image_debug = cv2.drawContours(image.copy(), [rectangle], 0, color, thickness)
+        rectangle_image_color = rectangle.copy()
+        a1 = image.shape[1]/float(image_color.shape[1])
+        a2 = image.shape[0]/float(image_color.shape[0])
+        for index in range(len(rectangle_image_color)):
+            rectangle_image_color[index, 0] = int(rectangle_image_color[index, 0] / a1)
+            rectangle_image_color[index, 1] = int(rectangle_image_color[index, 1] / a2)
+        image_debug = cv2.drawContours(image_color.copy(), [rectangle_image_color], 0, color, thickness)
         if debug_level > 0:
             logger.info(f"Saving rectangle")
-            # save_image(image_debug, f"{out_folder}/rectangle_{file_debug_name}.png")
+            # save_image(image_color, f"{out_folder}/color_{file_debug_name}.png")
+            save_image(image_debug, f"{out_folder}/rectangle_{file_debug_name}.png")
             # image_debug = cv2.drawContours(image.copy(), [box], 0, color, thickness)
             # logger.info(f"Saving min_area_boxes")
             # save_image(image_debug, f"{out_folder}/min_area_box_{file_debug_name}.png")

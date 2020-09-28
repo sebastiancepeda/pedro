@@ -1,7 +1,8 @@
+import glob
+
 import cv2
 import numpy as np
 import pandas as pd
-import glob
 
 from cv.image_processing import get_xs
 from io_utils.read_polygons_json import get_labels_plates_text
@@ -57,11 +58,13 @@ def get_labels(alphabet, dsize_cv2, im_shape, row):
     pts = [pts.reshape((-1, 1, 2))]
     im_label = np.zeros(im_shape)
     cv2.fillPoly(im_label, pts, color=1)
-    im_label = cv2.resize(im_label, dsize=dsize_cv2, interpolation=cv2.INTER_CUBIC)
+    im_label = cv2.resize(im_label, dsize=dsize_cv2,
+                          interpolation=cv2.INTER_CUBIC)
     return im_label, label_idx
 
 
-def get_image_label(folder, metadata, dsize, in_channels, out_channels, params):
+def get_image_label(folder, metadata, dsize, in_channels, out_channels,
+                    params):
     alphabet = params['alphabet']
     image_name_list = metadata.file_name.unique()
     set_size = len(image_name_list)
@@ -70,7 +73,8 @@ def get_image_label(folder, metadata, dsize, in_channels, out_channels, params):
     for image_name in image_name_list:
         image_data = metadata.loc[metadata.file_name == image_name]
         idx = image_data.idx.values[0]
-        im, gt = load_image_label(image_data, folder, dsize, in_channels, alphabet)
+        im, gt = load_image_label(image_data, folder, dsize, in_channels,
+                                  alphabet)
         if in_channels == 3:
             x[idx, :, :, :] = im[:, :, 0:in_channels]
         else:
@@ -79,24 +83,28 @@ def get_image_label(folder, metadata, dsize, in_channels, out_channels, params):
     return x, y
 
 
-def get_image(filename, dsize, in_channels):
-    x = np.zeros((1, dsize[0], dsize[1], in_channels))
+def get_image(filename):
+    image = cv2.imread(filename)
+    assert image is not None, f"Error while reading image: {filename}"
+    return image
+
+
+def im2gray(image, dsize, in_channels):
+    image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+    if in_channels == 3:
+        image = cv2.cvtColor(image, cv2.COLOR_GRAY2RGB)
     dsize_cv2 = (dsize[1], dsize[0])
-    # Image load
-    im = cv2.imread(filename)
-    assert im is not None, f"Error while reading image: {filename}"
-    im = cv2.cvtColor(im, cv2.COLOR_BGR2GRAY)
+    image = cv2.resize(image, dsize=dsize_cv2, interpolation=cv2.INTER_CUBIC)
+    result = np.zeros((1, dsize[0], dsize[1], in_channels))
     if in_channels == 3:
-        im = cv2.cvtColor(im, cv2.COLOR_GRAY2RGB)
-    im = cv2.resize(im, dsize=dsize_cv2, interpolation=cv2.INTER_CUBIC)
-    if in_channels == 3:
-        x[0, :, :, :] = im[:, :, 0:in_channels]
+        result[0, :, :, :] = image[:, :, 0:in_channels]
     else:
-        x[0, :, :, 0] = im[:, :]
-    return x
+        result[0, :, :, 0] = image[:, :]
+    return result
 
 
-def get_image_text_label(folder, metadata, dsize, in_channels, out_channels, alphabet):
+def get_image_text_label(folder, metadata, dsize, in_channels, out_channels,
+                         alphabet):
     image_name_list = metadata.image_name.unique()
     set_size = len(image_name_list)
     text_max_len = 13

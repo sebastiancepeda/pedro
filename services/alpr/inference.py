@@ -17,7 +17,7 @@ def get_params():
     alphabet = {char: idx for char, idx in zip(alphabet, range(len(alphabet)))}
     big_shape = (1024, 1024)
     plate_shape = (200, 50)
-    color = (255, 0, 0)
+    color = (0, 255, 0)
     thickness = 3
     debug_level = 1
     min_pct = 0.04
@@ -25,9 +25,8 @@ def get_params():
     ocr_height, ocr_width = normalize_image_shape(50, 200)
     min_area = (big_shape[0] * min_pct) * (big_shape[1] * min_pct)
     max_area = (big_shape[0] * max_pct) * (big_shape[1] * max_pct)
-    train_files = glob.glob(f"{input_folder}/train/*.jpg")
-    test_files = glob.glob(f"{input_folder}/test/*.jpg")
-    files = train_files + test_files
+    # files = glob.glob(f"{input_folder}/*/*.jpg")
+    files = glob.glob(f"{input_folder}/*/bmw_car_headlights_1269176.jpg")
     params = {
         'input_folder': input_folder,
         'output_folder': output_folder,

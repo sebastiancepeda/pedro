@@ -5,8 +5,9 @@ from PIL import Image
 
 
 def save_image(im, filename):
-    im = Image.fromarray(im)
-    im.save(filename)
+    # im = Image.fromarray(im)
+    # im.save(filename)
+    cv2.imwrite(filename, im)
 
 
 def get_contours_rgb(im, min_area, max_area):
