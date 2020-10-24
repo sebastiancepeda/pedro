@@ -1,6 +1,6 @@
 import torch
 
-from cv.pytorch.unet import (crop_img)
+from cv.pytorch.pytorch_unet import (crop_img)
 
 
 def save_model(model, path):

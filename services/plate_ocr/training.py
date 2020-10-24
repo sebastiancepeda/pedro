@@ -1,17 +1,17 @@
 from loguru import logger
 
-from cv.tensorflow_models.tensorflow_utils import train_model_gen
-from cv.tensorflow_models.unet2text3 import (
+from cv.tensorflow_models.tf_utils import train_model_gen
+from services.plate_ocr.ocr_model import (
     get_model_definition,
     normalize_image_shape
 )
-from io_utils.data_source import (
+from io.data_source import (
     get_plates_text_metadata,
     get_image_text_label,
     get_image_text_label_sim
 )
-from io_utils.image_text_label_generator import ImageTextLabelGenerator
-from io_utils.utils import set_index
+from io.image_text_label_generator import ImageTextLabelGenerator
+from io.utils import set_index
 
 
 def get_params():

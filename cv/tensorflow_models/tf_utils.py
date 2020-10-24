@@ -69,3 +69,16 @@ def train_model_gen(data_train, data_val, model, params, logger):
     )
     model.load_weights(model_file)
     return model
+
+
+def compose_fs(functions):
+    def composed_function(x):
+        for f in functions:
+            x = f(x)
+        return x
+
+    return composed_function
+
+
+def identity_function(x):
+    return x

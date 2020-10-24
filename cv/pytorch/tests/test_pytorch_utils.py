@@ -5,7 +5,7 @@
 import torch
 
 from cv.pytorch.pytorch_utils import train_model
-from cv.pytorch.unet import (UNet)
+from cv.pytorch.pytorch_unet import (UNet)
 
 
 def train_model():

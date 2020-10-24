@@ -8,10 +8,7 @@ from tensorflow.keras.layers import (
     Conv2D, Conv2DTranspose, Lambda, Input,
     MaxPooling2D, concatenate,
 )
-
-
-def identity_function(x):
-    return x
+from cv.tensorflow_models.tf_utils import compose_fs, identity_function
 
 
 def normalize_image_shape(height, width):

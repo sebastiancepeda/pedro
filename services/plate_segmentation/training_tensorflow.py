@@ -1,11 +1,11 @@
 from loguru import logger
 
-from cv.tensorflow_models.tensorflow_utils import train_model
-from cv.tensorflow_models.unet_little import get_model_definition
-from io_utils.data_source import (
+from cv.tensorflow_models.tf_utils import train_model
+from services.plate_segmentation.plate_segmentation_model import get_model_definition
+from io.data_source import (
     get_image_label, get_filenames,
     get_segmentation_labels)
-from io_utils.utils import set_index
+from io.utils import set_index
 
 
 def get_params():

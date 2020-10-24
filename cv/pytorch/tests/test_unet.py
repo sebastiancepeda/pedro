@@ -5,7 +5,7 @@
 
 import torch
 
-from cv.pytorch.unet import UNet
+from cv.pytorch.pytorch_unet import UNet
 
 
 def test_unet():

@@ -1,9 +1,9 @@
 import glob
 import pandas as pd
 
-from cv.tensorflow_models.unet2text3 import (normalize_image_shape)
-from cv.tensorflow_models.unet_little import get_model_definition as plate_seg_model_def
-from cv.tensorflow_models.unet2text3 import get_model_definition as plate_ocr_model_def
+from services.plate_ocr.ocr_model import (normalize_image_shape)
+from services.plate_segmentation.plate_segmentation_model import get_model_definition as plate_seg_model_def
+from services.plate_ocr.ocr_model import get_model_definition as plate_ocr_model_def
 from services.plate_segmentation.inference import plate_segmentation
 from services.plate_ocr.inference import image_ocr
 

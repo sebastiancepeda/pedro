@@ -5,7 +5,7 @@ import numpy as np
 import pandas as pd
 
 from cv.image_processing import get_xs
-from io_utils.read_polygons_json import get_labels_plates_text
+from io.read_polygons_json import get_labels_plates_text
 
 
 def load_image(im_data, folder, dsize, in_channels):

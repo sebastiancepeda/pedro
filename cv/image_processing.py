@@ -1,12 +1,9 @@
 import cv2
 import numpy as np
 import math
-from PIL import Image
 
 
 def save_image(im, filename):
-    # im = Image.fromarray(im)
-    # im.save(filename)
     cv2.imwrite(filename, im)
 
 

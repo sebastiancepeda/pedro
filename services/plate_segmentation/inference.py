@@ -1,4 +1,5 @@
 import glob
+
 import cv2
 import pandas as pd
 
@@ -10,12 +11,13 @@ from cv.image_processing import (
     get_rectangle,
     save_image
 )
-from cv.tensorflow_models.unet_little import get_model_definition as plate_seg_model_def
-from io_utils.data_source import (
+from services.plate_segmentation.plate_segmentation_model import \
+    get_model_definition as plate_seg_model_def
+from io.data_source import (
     get_image,
     im2gray
 )
-from io_utils.utils import (
+from io.utils import (
     CustomLogger
 )
 
@@ -30,7 +32,7 @@ def get_params():
     plate_shape = (200, 50)
     color = (255, 0, 0)
     thickness = 3
-    debug_level = 1#5
+    debug_level = 1  # 5
     min_pct = 0.04
     max_pct = 0.20
     min_area = (big_shape[0] * min_pct) * (big_shape[1] * min_pct)
@@ -89,12 +91,11 @@ def plate_segmentation(event, context):
     file_debug_name = file_debug_name.split('.')[0]
     logger = CustomLogger(file_debug_name, logger)
     image_color = get_image(file)
+    if debug_level > 0:
+        save_image(image_color, f"{out_folder}/x_{file_debug_name}.png")
     x = im2gray(image_color, dsize, in_channels)
     x = pred2im(x, dsize, 0, in_channels)
     logger.info("Pre process input")
-    # if debug_level > 0:
-    #     x_debug = cv2.resize(x, dsize=big_shape, interpolation=cv2.INTER_CUBIC)
-    #     save_image(x_debug, f"{out_folder}/rectangle_{file_debug_name}_x.png")
     x = preprocess_input(x)
     logger.info("Inference")
     x = x.reshape(1, dsize[0], dsize[0], 3)
@@ -106,24 +107,31 @@ def plate_segmentation(event, context):
     y = cv2.resize(y, dsize=big_shape, interpolation=cv2.INTER_CUBIC)
     logger.info("Getting contours")
     contours = get_contours_rgb(y, min_area, max_area)
-    # if debug_level > 0:
-    #     save_image(255-y, f"{out_folder}/rectangle_{file_debug_name}_y.png")
+    if debug_level > 0:
+        debug_dsize = (image_color.shape[1], image_color.shape[0])
+        y_debug = cv2.resize(y, dsize=debug_dsize, interpolation=cv2.INTER_CUBIC)
+        save_image(255 - y_debug, f"{out_folder}/y_pred_{file_debug_name}.png")
     im_pred = None
     rectangle = None
     image_debug = None
     if len(contours) > 0:
         rectangle = get_rectangle(contours)
         rectangle_image_color = rectangle.copy()
-        a1 = image.shape[1]/float(image_color.shape[1])
-        a2 = image.shape[0]/float(image_color.shape[0])
+        a1 = image.shape[1] / float(image_color.shape[1])
+        a2 = image.shape[0] / float(image_color.shape[0])
         for index in range(len(rectangle_image_color)):
-            rectangle_image_color[index, 0] = int(rectangle_image_color[index, 0] / a1)
-            rectangle_image_color[index, 1] = int(rectangle_image_color[index, 1] / a2)
-        image_debug = cv2.drawContours(image_color.copy(), [rectangle_image_color], 0, color, thickness)
+            rectangle_image_color[index, 0] = int(
+                rectangle_image_color[index, 0] / a1)
+            rectangle_image_color[index, 1] = int(
+                rectangle_image_color[index, 1] / a2)
+        image_debug = cv2.drawContours(image_color.copy(),
+                                       [rectangle_image_color], 0, color,
+                                       thickness)
         if debug_level > 0:
             logger.info(f"Saving rectangle")
             # save_image(image_color, f"{out_folder}/color_{file_debug_name}.png")
-            save_image(image_debug, f"{out_folder}/rectangle_{file_debug_name}.png")
+            save_image(image_debug,
+                       f"{out_folder}/rectangle_{file_debug_name}.png")
             # image_debug = cv2.drawContours(image.copy(), [box], 0, color, thickness)
             # logger.info(f"Saving min_area_boxes")
             # save_image(image_debug, f"{out_folder}/min_area_box_{file_debug_name}.png")
@@ -131,8 +139,8 @@ def plate_segmentation(event, context):
         warping = get_warping(rectangle, plate_shape)
         im_pred = warp_image(image, warping, plate_shape)
         logger.info(f"Saving min_area_boxes")
-        # if debug_level > 0:
-        #     save_image(im_pred, f"{out_folder}/plate_{file_debug_name}.png")
+        if debug_level > 0:
+            save_image(im_pred, f"{out_folder}/warped_image_{file_debug_name}.png")
     else:
         logger.info("Countours not found")
     result = {
@@ -152,7 +160,8 @@ def segment_plates(params):
     model_file = params['plate_segmentation_model_file']
     logger.info("Loading model")
     plate_segmentation_model_params = params['plate_segmentation_model_params']
-    plate_segmentation_model_file, plate_segmentation_preprocessing = plate_seg_model_def(**plate_segmentation_model_params)
+    plate_segmentation_model_file, plate_segmentation_preprocessing = plate_seg_model_def(
+        **plate_segmentation_model_params)
     plate_segmentation_model_file.load_weights(model_file)
     logger.info("Loading data")
     files = params['files']
@@ -162,9 +171,12 @@ def segment_plates(params):
         'plate_segmentation_preprocessing': plate_segmentation_preprocessing,
     }
     context.update(params)
-    events = [{'image_file': f, 'ejec_id': ejec_id} for ejec_id, f in enumerate(files)]
-    results = map(lambda e: plate_segmentation(event=e, context=context), events)
-    results = map(lambda e: {k: e[k] for k in ('file', 'len_contours')}, results)
+    events = [{'image_file': f, 'ejec_id': ejec_id} for ejec_id, f in
+              enumerate(files)]
+    results = map(lambda e: plate_segmentation(event=e, context=context),
+                  events)
+    results = map(lambda e: {k: e[k] for k in ('file', 'len_contours')},
+                  results)
     results = pd.DataFrame(results)
     results.to_csv(f"{params['output_folder']}/events_results.csv")
 

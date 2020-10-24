@@ -4,8 +4,8 @@
 """
 import numpy as np
 
-from cv.tensorflow_models.unet import get_model_definition
-from cv.tensorflow_models.tensorflow_utils import train_model
+from cv.tensorflow_models.tf_unet import get_model_definition
+from cv.tensorflow_models.tf_utils import train_model
 
 
 def test_train_model():

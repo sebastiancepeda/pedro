@@ -5,7 +5,7 @@
 
 import torch
 
-from cv.pytorch.unet_small import UNetSmall
+from cv.pytorch.pytorch_unet_small import UNetSmall
 
 
 def test_unet_small():

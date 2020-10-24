@@ -9,9 +9,7 @@ from tensorflow.keras.layers import (
     MaxPooling2D, concatenate,
 )
 
-
-def identity_function(x):
-    return x
+from cv.tensorflow_models.tf_utils import identity_function
 
 
 def get_model_definition(img_height, img_width, in_channels, out_channels):

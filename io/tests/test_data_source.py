@@ -5,7 +5,7 @@
 
 import pathlib
 
-from io_utils.data_source import get_plates_text_metadata
+from io.data_source import get_plates_text_metadata
 
 
 def get_params():

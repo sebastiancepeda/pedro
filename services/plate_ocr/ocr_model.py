@@ -10,9 +10,7 @@ from tensorflow.keras.layers import (
     MaxPooling2D)
 import numpy as np
 
-
-def identity_function(x):
-    return x
+from cv.tensorflow_models.tf_utils import compose_fs, identity_function
 
 
 def normalize_image_shape(height, width):
@@ -20,15 +18,6 @@ def normalize_image_shape(height, width):
     width = (width // base) * base + base * int(width > 0)
     height = (height // base) * base + base * int(height > 0)
     return height, width
-
-
-def compose_fs(functions):
-    def composed_function(x):
-        for f in functions:
-            x = f(x)
-        return x
-
-    return composed_function
 
 
 def get_model_definition(img_height, img_width, in_channels, out_channels):
